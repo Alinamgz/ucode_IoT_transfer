@@ -6,26 +6,26 @@
 #  template: ti.sysbios.rom.cortexm.cc26xx.cc26x2v2/CC26xx_custom_makefile.xdt
 #  target: ti.targets.arm.elf.M4F
 
-vpath % /Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/sysbios/
-vpath %.c /Volumes/Storage/shared/amazur/xdctools_3_62_00_08_core/packages/
-vpath %.c /Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/
+vpath % C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/sysbios/
+vpath %.c C:/ti/ccs1020/xdctools_3_62_00_08_core/packages/
+vpath %.c C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/
 
-XOPTS = -I"/Volumes/Storage/shared/amazur/xdctools_3_62_00_08_core/packages/" -Dxdc_target_types__=/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/targets/arm/elf/std.h -Dxdc_target_name__=M4F
+XOPTS = -I"C:/ti/ccs1020/xdctools_3_62_00_08_core/packages/" -Dxdc_target_types__=C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/targets/arm/elf/std.h -Dxdc_target_name__=M4F
 
 BIOS_DEFS =  -Dti_sysbios_BIOS_swiEnabled__D=TRUE -Dti_sysbios_BIOS_taskEnabled__D=TRUE -Dti_sysbios_BIOS_clockEnabled__D=TRUE -Dti_sysbios_BIOS_runtimeCreatesEnabled__D=TRUE -Dti_sysbios_knl_Task_moduleStateCheckFlag__D=FALSE -Dti_sysbios_knl_Task_objectCheckFlag__D=FALSE -Dti_sysbios_hal_Hwi_DISABLE_ALL_HOOKS -Dti_sysbios_knl_Swi_DISABLE_ALL_HOOKS -Dti_sysbios_BIOS_smpEnabled__D=FALSE -Dti_sysbios_Build_useHwiMacros -Dti_sysbios_Build_useIndirectReferences=FALSE -Dti_sysbios_knl_Swi_numPriorities__D=6 -Dti_sysbios_knl_Task_deleteTerminatedTasks__D=FALSE -Dti_sysbios_knl_Task_numPriorities__D=6 -Dti_sysbios_knl_Task_checkStackFlag__D=FALSE -Dti_sysbios_knl_Task_initStackFlag__D=TRUE -Dti_sysbios_knl_Task_DISABLE_ALL_HOOKS -Dti_sysbios_knl_Clock_TICK_SOURCE=ti_sysbios_knl_Clock_TickSource_TIMER -Dti_sysbios_knl_Clock_TICK_MODE=ti_sysbios_knl_Clock_TickMode_DYNAMIC -Dti_sysbios_hal_Core_delegate_getId=ti_sysbios_hal_CoreNull_getId__E -Dti_sysbios_hal_Core_delegate_interruptCore=ti_sysbios_hal_CoreNull_interruptCore__E -Dti_sysbios_hal_Core_delegate_lock=ti_sysbios_hal_CoreNull_lock__E -Dti_sysbios_hal_Core_delegate_unlock=ti_sysbios_hal_CoreNull_unlock__E -Dti_sysbios_hal_Core_numCores__D=1 -Dti_sysbios_hal_CoreNull_numCores__D=1 -Dti_sysbios_utils_Load_taskEnabled__D=TRUE -Dti_sysbios_utils_Load_swiEnabled__D=FALSE -Dti_sysbios_utils_Load_hwiEnabled__D=FALSE -Dti_sysbios_family_arm_m3_Hwi_dispatcherSwiSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherTaskSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherAutoNestingSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherIrpTrackingSupport__D=TRUE -Dti_sysbios_knl_Semaphore_supportsEvents__D=FALSE -Dti_sysbios_knl_Semaphore_supportsPriority__D=FALSE -Dxdc_runtime_Assert_DISABLE_ALL -Dxdc_runtime_Log_DISABLE_ALL -DDeviceFamily_CC13X2_CC26X2 
 
 CCOPTS = --endian=little -mv7M4 --abi=eabi --float_support=fpv4spd16 -q -ms --opt_for_speed=0  --program_level_compile -o3 -g  -Dti_sysbios_family_arm_cc26xx_Boot_driverlibVersion=2 -Dti_posix_tirtos_Settings_debug__D=FALSE -Dti_sysbios_knl_Clock_stopCheckNext__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_enableException__D=FALSE -Dti_sysbios_family_arm_m3_Hwi_disablePriority__D=32U -Dti_sysbios_family_arm_m3_Hwi_numSparseInterrupts__D=0U -Dti_sysbios_knl_Task_minimizeLatency__D=FALSE
 
-BIOS_INC = -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/"
-ANNEX_INCS =  -I/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/ti/posix/ccs
-INCS = $(BIOS_INC) $(ANNEX_INCS) -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/" -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/" -I"/Volumes/Storage/shared/amazur/xdctools_3_62_00_08_core/packages/" -I"../" -I"/packages//"  -I/Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/include 
+BIOS_INC = -I"C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/"
+ANNEX_INCS =  -IC:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/ti/posix/ccs
+INCS = $(BIOS_INC) $(ANNEX_INCS) -I"C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/" -I"C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/" -I"C:/ti/ccs1020/xdctools_3_62_00_08_core/packages/" -I"../" -I"/packages//"  -IC:/ti/ccs1020/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/include 
 
-CC = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
-ASM = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
-AR = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armar rq
+CC = C:/ti/ccs1020/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
+ASM = C:/ti/ccs1020/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
+AR = C:/ti/ccs1020/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armar rq
 
-DEL = rm -f
-CP = cp -f
+DEL = C:/ti/ccs1020/xdctools_3_62_00_08_core/packages/../bin/rm -f
+CP = C:/ti/ccs1020/xdctools_3_62_00_08_core/packages/../bin/cp -f
 
 define RM
 	$(if $(wildcard $1),$(DEL) $1,:)
@@ -63,8 +63,8 @@ rom_sysbios.obj: BIOS.c knl/Clock.c knl/Idle.c knl/Intrinsics.c knl/Event.c knl/
 rom_sysbios.aem4f: rom_sysbios.obj m3_Hwi_asm.obj m3_Hwi_asm_switch.obj m3_IntrinsicsSupport_asm.obj m3_TaskSupport_asm.obj
 	@-$(call RM, $@)
 	@echo arem4f $^ ...
-	@$(AR) $@ $^ /Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/sysbios/rom/cortexm/cc26xx/cc26x2v2/golden/CC26xx/rom_sysbios_config.obj
+	@$(AR) $@ $^ C:/ti/ccs1020/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/ti/sysbios/rom/cortexm/cc26xx/cc26x2v2/golden/CC26xx/rom_sysbios_config.obj
 
 clean:
-	@$(DEL) ../makefile.libs
+	@$(DEL) ..\makefile.libs
 	@-$(call RM, *)

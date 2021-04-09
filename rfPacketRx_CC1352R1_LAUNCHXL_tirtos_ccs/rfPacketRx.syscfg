@@ -1,99 +1,47 @@
-/*
- * Copyright (c) 2018, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-// @cliArgs --board /ti/boards/CC1352R1_LAUNCHXL
-
-/*
- *  rfPacketRx.syscfg
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --board "/ti/boards/CC1352R1_LAUNCHXL" --product "simplelink_cc13x2_26x2_sdk@4.40.04.04"
+ * @versions {"data":"2021010520","timestamp":"2021010520","tool":"1.7.0+1746","templates":null}
  */
 
-/* ======== RF ======== */
-var RF = scripting.addModule("/ti/drivers/RF");
+/**
+ * Import the modules used in this configuration.
+ */
+const CCFG     = scripting.addModule("/ti/devices/CCFG");
+const custom   = scripting.addModule("/ti/devices/radioconfig/custom");
+const rfdesign = scripting.addModule("/ti/devices/radioconfig/rfdesign");
+const GPIO     = scripting.addModule("/ti/drivers/GPIO");
+const GPIO1    = GPIO.addInstance();
+const RF       = scripting.addModule("/ti/drivers/RF");
+const RTOS     = scripting.addModule("/ti/drivers/RTOS");
 
-/* if an antenna component exists, assign it to the rf instance */
-if (system.deviceData.board && system.deviceData.board.components.RF) {
-    RF.$hardware = system.deviceData.board.components.RF;
-}
+/**
+ * Write custom configuration values to the imported modules.
+ */
+CCFG.enableBootloader         = true;
+CCFG.enableBootloaderBackdoor = true;
+CCFG.dioBootloaderBackdoor    = 15;
+CCFG.levelBootloaderBackdoor  = "Active low";
+CCFG.forceVddr                = true;
+CCFG.ccfgTemplate.$name       = "ti_devices_CCFGTemplate0";
 
-/* ======== LED Red ======== */
-var GPIO = scripting.addModule("/ti/drivers/GPIO");  // Add a GPIO module for use by LEDs
-var LED_R = GPIO.addInstance();                      // Add an a GPIO module instance for LED_R
+custom.prop8                                              = ["custom868"];
+custom.radioConfigcustom868.phyType868                    = "2gfsk50kbps";
+custom.radioConfigcustom868.$name                         = "RF_Custom_Setting";
+custom.radioConfigcustom868.symbolRate                    = 100.000;
+custom.radioConfigcustom868.deviation                     = 50.0;
+custom.radioConfigcustom868.rxFilterBw                    = "195.9";
+custom.radioConfigcustom868.codeExportConfig.$name        = "ti_devices_radioconfig_code_export_param0";
+custom.radioConfigcustom868.codeExportConfig.symGenMethod = "Legacy";
 
-/* if a red LED component exists, assign it to the LED_R instance */
-if (system.deviceData.board && system.deviceData.board.components.LED_RED) {
-    LED_R.$hardware = system.deviceData.board.components.LED_RED;
-}
-else
-{
-    LED_R.mode = "Output";  // Set the LED pin to output
-}
+GPIO1.$hardware         = system.deviceData.board.components.LED_RED;
+GPIO1.$name             = "CONFIG_GPIO_RLED";
+GPIO1.pinInstance.$name = "CONFIG_PIN_RLED";
 
-LED_R.$name = "CONFIG_GPIO_RLED";                     // Descriptive name for the LED_R GPIO
-LED_R.pinInstance.$name = "CONFIG_PIN_RLED";          // Descriptive name for LED_R PIN
-
-/* ======== Radio Configuration ======== */
-const commonRf = system.getScript("/ti/easylink/easylink_common.js");
-const boardName = commonRf.getDeviceOrLaunchPadName(true);
-const phyFilePath = "/ti/easylink/rf_config/" + boardName + "_rf_defaults.js";
-
-// Get the supported proprietary phy for this board as defined by EasyLink
-const defaultPhy = system.getScript(phyFilePath).defaultPropPhyList[0];
-
-// Add an instance of the "Custom" RF Stack
-const customStack = scripting.addModule("/ti/devices/radioconfig/custom");
-
-// Add the default phy instance
-const phyInst = commonRf.addPropPhy(customStack, defaultPhy, true);
-phyInst.$name = "RF_Custom_Setting";
-
-// Disable multi-protocol patch
-phyInst.codeExportConfig.useMulti = false;
-
-/* ======== RF Design ======== */
-var rfDesign = scripting.addModule("ti/devices/radioconfig/rfdesign");
-const rfDesignSettings = system.getScript("/ti/common/lprf_rf_design_settings.js").rfDesignSettings;
-for(var setting in rfDesignSettings)
-{
-    rfDesign[setting] = rfDesignSettings[setting];
-}
-
-/* ======== Device ======== */
-var device = scripting.addModule("ti/devices/CCFG");
-const ccfgSettings = system.getScript("/ti/common/lprf_ccfg_settings.js").ccfgSettings;
-for(var setting in ccfgSettings)
-{
-    device[setting] = ccfgSettings[setting];
-}
-
-/* ======== RTOS ======== */
-const RTOS = scripting.addModule("/ti/drivers/RTOS");
-RTOS.name = "TI-RTOS";
-
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+GPIO1.gpioPin.$suggestSolution = "boosterpack.39";

@@ -266,6 +266,6 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
         /* Copy the payload + the status byte to the packet variable */
         memcpy(packet, packetDataPointer, (packetLength + 1));
 
-        RFQueue _nextEntry();
+        RFQueue_nextEntry();
     }
 }
