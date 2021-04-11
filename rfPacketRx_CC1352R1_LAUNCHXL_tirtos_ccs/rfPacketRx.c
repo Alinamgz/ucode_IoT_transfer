@@ -31,105 +31,21 @@
  */
 
 /***** Includes *****/
-/* Standard C Libraries */
-#include <stdlib.h>
-#include <unistd.h>
-
-/* TI Drivers */
-#include <ti/drivers/rf/RF.h>
-#include <ti/drivers/PIN.h>
-//
-#include <ti/drivers/UART2.h>
-//
-
-/* Driverlib Header files */
-#include DeviceFamily_constructPath(driverlib/rf_prop_mailbox.h)
-
-/* Board Header files */
-#include "ti_drivers_config.h"
-
-/* Application Header files */
-#include "RFQueue.h"
-#include <ti_radio_config.h>
+#include "rx_includes.h"
 
 /***** Defines *****/
-
-/* Packet RX Configuration */
-#define DATA_ENTRY_HEADER_SIZE 8  /* Constant header size of a Generic Data Entry */
-#define MAX_LENGTH             30 /* Max length byte the radio will accept */
-#define NUM_DATA_ENTRIES       2  /* NOTE: Only two data entries supported at the moment */
-#define NUM_APPENDED_BYTES     2  /* The Data Entries data field will contain:
-                                   * 1 Header byte (RF_cmdPropRx.rxConf.bIncludeHdr = 0x1)
-                                   * Max 30 payload bytes
-                                   * 1 status byte (RF_cmdPropRx.rxConf.bAppendStatus = 0x1) */
-
-
+#include "rx_defines.h"
 
 /***** Prototypes *****/
 static void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
 
 /***** Variable declarations *****/
-static RF_Object rfObject;
-static RF_Handle rfHandle;
-
-/* Pin driver handle */
-static PIN_Handle ledPinHandle;
-static PIN_State ledPinState;
-
-/* Buffer which contains all Data Entries for receiving data.
- * Pragmas are needed to make sure this buffer is 4 byte aligned (requirement from the RF Core) */
-#if defined(__TI_COMPILER_VERSION__)
-#pragma DATA_ALIGN (rxDataEntryBuffer, 4);
-static uint8_t
-rxDataEntryBuffer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
-                                                  MAX_LENGTH,
-                                                  NUM_APPENDED_BYTES)];
-#elif defined(__IAR_SYSTEMS_ICC__)
-#pragma data_alignment = 4
-static uint8_t
-rxDataEntryBuffer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
-                                                  MAX_LENGTH,
-                                                  NUM_APPENDED_BYTES)];
-#elif defined(__GNUC__)
-static uint8_t
-rxDataEntryBuffer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
-                                                  MAX_LENGTH,
-                                                  NUM_APPENDED_BYTES)]
-                                                  __attribute__((aligned(4)));
-#else
-#error This compiler is not supported.
-#endif
-
-/* Receive dataQueue for RF Core to fill in data */
-static dataQueue_t dataQueue;
-static rfc_dataEntryGeneral_t* currentDataEntry;
-static uint8_t packetLength;
-static uint8_t* packetDataPointer;
-
-
-static uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
-
-//
-static UART2_Handle uart;
-static UART2_Params uart_params;
-static char recv_prefix[] = "\r\nreceived: ";
-static char recv_suffix[] = "\r\n----------------\n";
-//
-
-/*
- * Application LED pin configuration table:
- *   - All LEDs board LEDs are off.
- */
-PIN_Config pinTable[] = {
-    CONFIG_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-	PIN_TERMINATE
-};
+#include "rx_glob_vars.h"
 
 /***** Function definitions *****/
 
-void *mainThread(void *arg0){
+void *mainThread(void *arg0) {
     const char welcome_msg[] = "--- Hello World ---\r\n";
-
     RF_Params rfParams;
     RF_Params_init(&rfParams);
 
@@ -139,7 +55,7 @@ void *mainThread(void *arg0){
         while(1);
     }
 
-    if( RFQueue_defineQueue(&dataQueue,
+    if (RFQueue_defineQueue(&dataQueue,
                             rxDataEntryBuffer,
                             sizeof(rxDataEntryBuffer),
                             NUM_DATA_ENTRIES,
@@ -151,8 +67,6 @@ void *mainThread(void *arg0){
 //
     UART2_Params_init(&uart_params);
     uart_params.baudRate = 115200;
-//    uartParams.writeDataMode = UART_DATA_BINARY;
-
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
         PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
@@ -191,8 +105,7 @@ void *mainThread(void *arg0){
                                                RF_PriorityNormal, &callback,
                                                RF_EventRxEntryDone);
 
-    switch(terminationReason)
-    {
+    switch(terminationReason) {
         case RF_EventLastCmdDone:
             // A stand-alone radio operation command or the last radio
             // operation command in a chain finished.
@@ -215,8 +128,7 @@ void *mainThread(void *arg0){
     }
 
     uint32_t cmdStatus = ((volatile RF_Op*)&RF_cmdPropRx)->status;
-    switch(cmdStatus)
-    {
+    switch(cmdStatus) {
         case PROP_DONE_OK:
             // Packet received with CRC OK
             break;
@@ -271,10 +183,10 @@ void *mainThread(void *arg0){
     while(1);
 }
 
-void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
-{
-    if (e & RF_EventRxEntryDone)
-    {
+void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
+    char write_this[60];
+
+    if (e & RF_EventRxEntryDone) {
         /* Toggle pin to indicate RX */
         PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED,
                            !PIN_getOutputValue(CONFIG_PIN_RLED));
@@ -291,9 +203,14 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
         /* Copy the payload + the status byte to the packet variable */
         memcpy(packet, packetDataPointer, (packetLength + 1));
 
-        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
-//        UART2_write(uart, packet, sizeof(packet), NULL);
-        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
+        memset(write_this, '\0', sizeof(write_this));
+        sprintf(write_this, "\rgot this: %s\r\n-------------\n", packet);
+
+//        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
+//        UART2_write(uart, packet, 30, NULL);
+//        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
+
+          UART2_write(uart, write_this, sizeof(write_this), NULL);
 
         RFQueue_nextEntry();
     }

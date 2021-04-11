@@ -85,8 +85,8 @@ PIN_Config pinTable[] =
 
 /***** Function definitions *****/
 
-void *mainThread(void *arg0)
-{
+void *mainThread(void *arg0) {
+//    char msg[] = "lorem ipsum"
     RF_Params rfParams;
     RF_Params_init(&rfParams);
 
@@ -117,9 +117,8 @@ void *mainThread(void *arg0)
         packet[0] = (uint8_t)(seqNumber >> 8);
         packet[1] = (uint8_t)(seqNumber++);
         uint8_t i;
-        for (i = 2; i < PAYLOAD_LENGTH; i++)
-        {
-            packet[i] = rand();
+        for (i = 2; i < PAYLOAD_LENGTH; i++) {
+            packet[i] = 44 + i;
         }
 
         /* Send packet */
