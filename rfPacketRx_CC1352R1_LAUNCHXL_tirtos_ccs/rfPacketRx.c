@@ -22,7 +22,7 @@
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * EXEMPL ARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
@@ -33,10 +33,14 @@
 /***** Includes *****/
 /* Standard C Libraries */
 #include <stdlib.h>
+#include <unistd.h>
 
 /* TI Drivers */
 #include <ti/drivers/rf/RF.h>
 #include <ti/drivers/PIN.h>
+//
+#include <ti/drivers/UART2.h>
+//
 
 /* Driverlib Header files */
 #include DeviceFamily_constructPath(driverlib/rf_prop_mailbox.h)
@@ -105,27 +109,33 @@ static uint8_t* packetDataPointer;
 
 static uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
 
+//
+static UART2_Handle uart;
+static UART2_Params uart_params;
+static char recv_prefix[] = "\r\nreceived: ";
+static char recv_suffix[] = "\r\n----------------\n";
+//
+
 /*
  * Application LED pin configuration table:
  *   - All LEDs board LEDs are off.
  */
-PIN_Config pinTable[] =
-{
+PIN_Config pinTable[] = {
     CONFIG_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
 	PIN_TERMINATE
 };
 
 /***** Function definitions *****/
 
-void *mainThread(void *arg0)
-{
+void *mainThread(void *arg0){
+    const char welcome_msg[] = "--- Hello World ---\r\n";
+
     RF_Params rfParams;
     RF_Params_init(&rfParams);
 
     /* Open LED pins */
     ledPinHandle = PIN_open(&ledPinState, pinTable);
-    if (ledPinHandle == NULL)
-    {
+    if (ledPinHandle == NULL) {
         while(1);
     }
 
@@ -133,11 +143,26 @@ void *mainThread(void *arg0)
                             rxDataEntryBuffer,
                             sizeof(rxDataEntryBuffer),
                             NUM_DATA_ENTRIES,
-                            MAX_LENGTH + NUM_APPENDED_BYTES))
-    {
+                            MAX_LENGTH + NUM_APPENDED_BYTES)) {
         /* Failed to allocate space for all data entries */
         while(1);
     }
+
+//
+    UART2_Params_init(&uart_params);
+    uart_params.baudRate = 115200;
+//    uartParams.writeDataMode = UART_DATA_BINARY;
+
+    uart = UART2_open(CONFIG_UART2_0, &uart_params);
+    if (uart) {
+        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
+
+         if (UART2_write(uart, welcome_msg, sizeof(welcome_msg), NULL) == UART2_STATUS_SUCCESS) {
+             sleep(3);
+             PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
+         }
+    }
+//
 
     /* Modify CMD_PROP_RX command for application needs */
     /* Set the Data Entity queue for received data */
@@ -265,6 +290,10 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
 
         /* Copy the payload + the status byte to the packet variable */
         memcpy(packet, packetDataPointer, (packetLength + 1));
+
+        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
+//        UART2_write(uart, packet, sizeof(packet), NULL);
+        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
 
         RFQueue_nextEntry();
     }
