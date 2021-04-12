@@ -45,7 +45,7 @@ static void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
 /***** Function definitions *****/
 
 void *mainThread(void *arg0) {
-    const char welcome_msg[] = "--- Hello World ---\r\n";
+    const char welcome_msg[] = "\r\n--- Hello World ---\r\n";
     RF_Params rfParams;
     RF_Params_init(&rfParams);
 
@@ -67,14 +67,10 @@ void *mainThread(void *arg0) {
 //
     UART2_Params_init(&uart_params);
     uart_params.baudRate = 115200;
+    uart_params.writeMode = UART2_Mode_NONBLOCKING;
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
-        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
-
-         if (UART2_write(uart, welcome_msg, sizeof(welcome_msg), NULL) == UART2_STATUS_SUCCESS) {
-             sleep(3);
-             PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
-         }
+        UART2_write(uart, welcome_msg, sizeof(welcome_msg), NULL);
     }
 //
 
@@ -184,7 +180,8 @@ void *mainThread(void *arg0) {
 }
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
-    char write_this[60];
+//    char write_this[60];
+//    char write_this[] = "gogi\r\n";
 
     if (e & RF_EventRxEntryDone) {
         /* Toggle pin to indicate RX */
@@ -203,14 +200,14 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
         /* Copy the payload + the status byte to the packet variable */
         memcpy(packet, packetDataPointer, (packetLength + 1));
 
-        memset(write_this, '\0', sizeof(write_this));
-        sprintf(write_this, "\rgot this: %s\r\n-------------\n", packet);
+//        sprintf(write_this, "- %s%s%s -", recv_prefix, packet, recv_suffix);
 
-//        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
-//        UART2_write(uart, packet, 30, NULL);
-//        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
+        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
+        UART2_write(uart, packet, 30, NULL);
+        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
 
-          UART2_write(uart, write_this, sizeof(write_this), NULL);
+//          UART2_write(uart, write_this, sizeof(write_this), NULL);
+//        memset(write_this, '\0', sizeof(write_this));
 
         RFQueue_nextEntry();
     }

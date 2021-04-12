@@ -43,8 +43,8 @@ GPIO1.pinInstance.$name = "CONFIG_PIN_RLED";
 
 UART21.$name               = "CONFIG_UART2_0";
 UART21.$hardware           = system.deviceData.board.components.XDS110UART;
+UART21.dataDirection       = "Send Only";
 UART21.txPinInstance.$name = "CONFIG_PIN_0";
-UART21.rxPinInstance.$name = "CONFIG_PIN_1";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
@@ -54,4 +54,3 @@ UART21.rxPinInstance.$name = "CONFIG_PIN_1";
 GPIO1.gpioPin.$suggestSolution     = "boosterpack.39";
 UART21.uart.$suggestSolution       = "UART0";
 UART21.uart.txPin.$suggestSolution = "boosterpack.4";
-UART21.uart.rxPin.$suggestSolution = "boosterpack.3";

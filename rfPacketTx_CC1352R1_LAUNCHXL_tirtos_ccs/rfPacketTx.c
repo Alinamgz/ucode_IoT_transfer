@@ -111,22 +111,23 @@ void *mainThread(void *arg0) {
     /* Set the frequency */
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
-    while(1)
-    {
+    while(1) {
+//        sleep(1);
         /* Create packet with incrementing sequence number and random payload */
         packet[0] = (uint8_t)(seqNumber >> 8);
         packet[1] = (uint8_t)(seqNumber++);
         uint8_t i;
+
+//        srand(time(NULL));
         for (i = 2; i < PAYLOAD_LENGTH; i++) {
-            packet[i] = 44 + i;
+            packet[i] = 97 + rand() % 26;
         }
 
         /* Send packet */
         RF_EventMask terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx,
                                                    RF_PriorityNormal, NULL, 0);
 
-        switch(terminationReason)
-        {
+        switch(terminationReason) {
             case RF_EventLastCmdDone:
                 // A stand-alone radio operation command or the last radio
                 // operation command in a chain finished.
@@ -149,8 +150,7 @@ void *mainThread(void *arg0) {
         }
 
         uint32_t cmdStatus = ((volatile RF_Op*)&RF_cmdPropTx)->status;
-        switch(cmdStatus)
-        {
+        switch(cmdStatus)        {
             case PROP_DONE_OK:
                 // Packet transmitted successfully
                 break;
