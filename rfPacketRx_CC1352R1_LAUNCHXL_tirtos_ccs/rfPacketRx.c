@@ -203,7 +203,7 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
 //        sprintf(write_this, "- %s%s%s -", recv_prefix, packet, recv_suffix);
 
         UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
-        UART2_write(uart, packet, 30, NULL);
+        UART2_write(uart, packet, MAX_LENGTH, NULL);
         UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
 
 //          UART2_write(uart, write_this, sizeof(write_this), NULL);

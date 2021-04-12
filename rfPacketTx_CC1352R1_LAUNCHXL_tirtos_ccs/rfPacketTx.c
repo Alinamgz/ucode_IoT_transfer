@@ -32,69 +32,39 @@
 
 /***** Includes *****/
 /* Standard C Libraries */
-#include <stdlib.h>
-#include <unistd.h>
-
-/* TI Drivers */
-#include <ti/drivers/rf/RF.h>
-#include <ti/drivers/PIN.h>
-#include <ti/drivers/pin/PINCC26XX.h>
-
-/* Driverlib Header files */
-#include DeviceFamily_constructPath(driverlib/rf_prop_mailbox.h)
-
-/* Board Header files */
-#include "ti_drivers_config.h"
-#include <ti_radio_config.h>
+#include "tx_includes.h"
 
 /***** Defines *****/
 
 /* Do power measurement */
-//#define POWER_MEASUREMENT
-
-/* Packet TX Configuration */
-#define PAYLOAD_LENGTH      30
-#ifdef POWER_MEASUREMENT
-#define PACKET_INTERVAL     5  /* For power measurement set packet interval to 5s */
-#else
-#define PACKET_INTERVAL     500000  /* Set packet interval to 500000us or 500ms */
-#endif
+#include "tx_defines.h"
 
 /***** Prototypes *****/
-
-/***** Variable declarations *****/
-static RF_Object rfObject;
-static RF_Handle rfHandle;
-
-/* Pin driver handle */
-static PIN_Handle ledPinHandle;
-static PIN_State ledPinState;
-
-static uint8_t packet[PAYLOAD_LENGTH];
-static uint16_t seqNumber;
-
-/*
- * Application LED pin configuration table:
- *   - All LEDs board LEDs are off.
- */
-PIN_Config pinTable[] =
-{
-    CONFIG_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    PIN_TERMINATE
-};
+#include "tx_glob_vars.h"
 
 /***** Function definitions *****/
 
 void *mainThread(void *arg0) {
-//    char msg[] = "lorem ipsum"
+    char msg[] = "lorem ipsum\r\n";
+    char msg_buf[120];
+    uint8_t i = 0;
+//    char input;
+
     RF_Params rfParams;
     RF_Params_init(&rfParams);
 
     /* Open LED pins */
     ledPinHandle = PIN_open(&ledPinState, pinTable);
-    if (ledPinHandle == NULL)
-    {
+    if (ledPinHandle == NULL) {
         while(1);
+    }
+
+    UART2_Params_init(&uart_params);
+    uart_params.baudRate = 115200;
+    uart = UART2_open(CONFIG_UART2_0, &uart_params);
+    if (uart) {
+        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_GLED,!PIN_getOutputValue(CONFIG_PIN_GLED));
+        UART2_write(uart, msg, sizeof(msg), NULL);
     }
 
     RF_cmdPropTx.pktLen = PAYLOAD_LENGTH;
@@ -112,16 +82,29 @@ void *mainThread(void *arg0) {
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
     while(1) {
-//        sleep(1);
+        memset(msg_buf, 0, 120);
+
+        for (i = 0; i < 119; i++) {
+            UART2_read(uart, &msg_buf[i], 1, NULL);
+            UART2_write(uart, &msg_buf[i], 1, NULL);
+
+            if (msg_buf[i] == '\r') {
+                UART2_write(uart, "\n", 1, NULL);
+                memcpy(packet, msg_buf, PAYLOAD_LENGTH);
+                break;
+            }
+        }
+
+
         /* Create packet with incrementing sequence number and random payload */
-        packet[0] = (uint8_t)(seqNumber >> 8);
-        packet[1] = (uint8_t)(seqNumber++);
-        uint8_t i;
+//        packet[0] = (uint8_t)(seqNumber >> 8);
+//        packet[1] = (uint8_t)(seqNumber++);
+//        uint8_t i;
 
 //        srand(time(NULL));
-        for (i = 2; i < PAYLOAD_LENGTH; i++) {
-            packet[i] = 97 + rand() % 26;
-        }
+//        for (i = 2; i < PAYLOAD_LENGTH; i++) {
+//            packet[i] = 97 + rand() % 26;
+//        }
 
         /* Send packet */
         RF_EventMask terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx,
