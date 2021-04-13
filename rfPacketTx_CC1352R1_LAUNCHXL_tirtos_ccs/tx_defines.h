@@ -9,3 +9,5 @@
 #else
 #define PACKET_INTERVAL     500000  /* Set packet interval to 500000us or 500ms */
 #endif
+
+#define TX_ID "L41009CU"

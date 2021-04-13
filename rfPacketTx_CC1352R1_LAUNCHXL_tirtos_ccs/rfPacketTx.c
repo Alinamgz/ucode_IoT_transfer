@@ -48,10 +48,10 @@ void *mainThread(void *arg0) {
     char msg[] = "lorem ipsum\r\n";
     char msg_buf[120];
     uint8_t i = 0;
-//    char input;
 
     RF_Params rfParams;
     RF_Params_init(&rfParams);
+    RF_EventMask terminationReason;
 
     /* Open LED pins */
     ledPinHandle = PIN_open(&ledPinState, pinTable);
@@ -83,16 +83,31 @@ void *mainThread(void *arg0) {
 
     while(1) {
         memset(msg_buf, 0, 120);
+        memset(packet, 0, PAYLOAD_LENGTH);
+
+        memcpy(packet, TX_ID, 8);
+        packet[8] = '1';
+        packet[9] = '1';
 
         for (i = 0; i < 119; i++) {
+            if (i % 19 == 1) {
+//                UART2_write(uart, "op", 2, NULL);
+                packet[9]++;
+            }
+
             UART2_read(uart, &msg_buf[i], 1, NULL);
             UART2_write(uart, &msg_buf[i], 1, NULL);
 
             if (msg_buf[i] == '\r') {
                 UART2_write(uart, "\n", 1, NULL);
-                memcpy(packet, msg_buf, PAYLOAD_LENGTH);
                 break;
             }
+        }
+
+        for (i = 0; i < packet[9] - '1'; i++) {
+            packet[8] = '1' + i;
+            memcpy(&packet[10], &msg_buf[19 * i], 19);
+            terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
         }
 
 
@@ -101,14 +116,9 @@ void *mainThread(void *arg0) {
 //        packet[1] = (uint8_t)(seqNumber++);
 //        uint8_t i;
 
-//        srand(time(NULL));
-//        for (i = 2; i < PAYLOAD_LENGTH; i++) {
-//            packet[i] = 97 + rand() % 26;
-//        }
-
         /* Send packet */
-        RF_EventMask terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx,
-                                                   RF_PriorityNormal, NULL, 0);
+//        RF_EventMask terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx,
+//                                                   RF_PriorityNormal, NULL, 0);
 
         switch(terminationReason) {
             case RF_EventLastCmdDone:

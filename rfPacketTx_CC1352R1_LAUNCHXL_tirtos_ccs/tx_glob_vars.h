@@ -13,6 +13,7 @@ static PIN_State ledPinState;
 
 static uint8_t packet[PAYLOAD_LENGTH];
 static uint16_t seqNumber;
+static uint8_t parts;
 
 /*
  * Application LED pin configuration table:

@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 /***** Variable declarations *****/
 static RF_Object rfObject;
