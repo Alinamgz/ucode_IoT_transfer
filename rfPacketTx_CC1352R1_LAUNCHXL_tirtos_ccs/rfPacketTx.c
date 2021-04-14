@@ -86,8 +86,8 @@ void *mainThread(void *arg0) {
         memset(packet, 0, PAYLOAD_LENGTH);
 
         memcpy(packet, TX_ID, 8);
-        packet[8] = '1';
-        packet[9] = '1';
+        packet[8] = '0';
+        packet[9] = '0';
 
         for (i = 0; i < 119; i++) {
             if (i % 19 == 1) {
@@ -104,9 +104,11 @@ void *mainThread(void *arg0) {
             }
         }
 
-        for (i = 0; i < packet[9] - '1'; i++) {
+        for (i = 0; i <= packet[9] - '1'; i++) {
+//            UART2_write(uart, "\r\n", 2, NULL);
             packet[8] = '1' + i;
             memcpy(&packet[10], &msg_buf[19 * i], 19);
+//            UART2_write(uart, packet, 30, NULL);
             terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
         }
 
