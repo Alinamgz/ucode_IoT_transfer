@@ -46,7 +46,7 @@
 
 void *mainThread(void *arg0) {
     char msg[] = "lorem ipsum\r\n";
-    char msg_buf[120];
+    char msg_buf[BUF_SZ];
     uint8_t i = 0;
 
     RF_Params rfParams;
@@ -81,18 +81,19 @@ void *mainThread(void *arg0) {
     /* Set the frequency */
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
+    int payload_sz = PAYLOAD_LENGTH - sizeof(TX_ID) - 3;
+
     while(1) {
-        memset(msg_buf, 0, 120);
+        memset(msg_buf, 0, BUF_SZ);
         memset(packet, 0, PAYLOAD_LENGTH);
 
-        memcpy(packet, TX_ID, 8);
-        packet[8] = '1';
-        packet[9] = '1';
+        memcpy(packet, TX_ID, sizeof(TX_ID));
+        packet[sizeof(TX_ID)] = '1';
+        packet[1 + sizeof(TX_ID)] = '0';
 
-        for (i = 0; i < 119; i++) {
-            if (i % 19 == 1) {
-//                UART2_write(uart, "op", 2, NULL);
-                packet[9]++;
+        for (i = 0; i < BUF_SZ; i++) {
+            if (i % payload_sz == 1) {
+                packet[1 + sizeof(TX_ID)]++;
             }
 
             UART2_read(uart, &msg_buf[i], 1, NULL);
@@ -104,12 +105,12 @@ void *mainThread(void *arg0) {
             }
         }
 
-        for (i = 0; i < packet[9] - '1'; i++) {
-            packet[8] = '1' + i;
-            memcpy(&packet[10], &msg_buf[19 * i], 19);
+        for (i = 0; i < packet[1 + sizeof(TX_ID)] - '0'; i++) {
+            packet[sizeof(TX_ID)] = '1' + i;
+            memcpy(&packet[2 + 1 + sizeof(TX_ID)], &msg_buf[payload_sz * i], payload_sz);
+
             terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
         }
-
 
         /* Create packet with incrementing sequence number and random payload */
 //        packet[0] = (uint8_t)(seqNumber >> 8);

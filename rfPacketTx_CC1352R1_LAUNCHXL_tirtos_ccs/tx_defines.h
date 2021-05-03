@@ -3,7 +3,7 @@
 //#define POWER_MEASUREMENT
 
 /* Packet TX Configuration */
-#define PAYLOAD_LENGTH      30
+#define PAYLOAD_LENGTH      60
 #ifdef POWER_MEASUREMENT
 #define PACKET_INTERVAL     5  /* For power measurement set packet interval to 5s */
 #else
@@ -11,3 +11,4 @@
 #endif
 
 #define TX_ID "L41009CU"
+#define BUF_SZ 240

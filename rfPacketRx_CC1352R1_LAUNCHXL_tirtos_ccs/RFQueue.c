@@ -55,9 +55,7 @@ rfc_dataEntryGeneral_t* readEntry;
 //! \return rfc_dataEntry*
 //
 //*****************************************************************************
-rfc_dataEntryGeneral_t*
-RFQueue_getDataEntry()
-{
+rfc_dataEntryGeneral_t * RFQueue_getDataEntry() {
   return (readEntry);
 }
 
@@ -68,9 +66,7 @@ RFQueue_getDataEntry()
 //! \return None
 //
 //*****************************************************************************
-uint8_t
-RFQueue_nextEntry()
-{
+uint8_t RFQueue_nextEntry() {
   /* Set status to pending */
   readEntry->status = DATA_ENTRY_PENDING;
 
@@ -93,24 +89,21 @@ RFQueue_nextEntry()
 //! \return uint8_t
 //
 //*****************************************************************************
-uint8_t
-RFQueue_defineQueue(dataQueue_t *dataQueue, uint8_t *buf, uint16_t buf_len, uint8_t numEntries, uint16_t length)
-{
+uint8_t RFQueue_defineQueue(dataQueue_t *dataQueue, uint8_t *buf, uint16_t buf_len,
+                            uint8_t numEntries, uint16_t length) {
 
-  if (buf_len < (numEntries * (length + RF_QUEUE_DATA_ENTRY_HEADER_SIZE + RF_QUEUE_QUEUE_ALIGN_PADDING(length))))
-  {
+  if (buf_len < (numEntries * (length + RF_QUEUE_DATA_ENTRY_HEADER_SIZE + RF_QUEUE_QUEUE_ALIGN_PADDING(length)))) {
     /* queue does not fit into buffer */
     return (1);
   }
 
   /* Padding needed for 4-byte alignment? */
-  uint8_t pad = 4-((length + RF_QUEUE_DATA_ENTRY_HEADER_SIZE)%4);
+  uint8_t pad = 4 - ((length + RF_QUEUE_DATA_ENTRY_HEADER_SIZE) % 4);
 
   /* Set the Data Entries common configuration */
   uint8_t *first_entry = buf;
   int i;
-  for (i = 0; i < numEntries; i++)
-  {
+  for (i = 0; i < numEntries; i++)  {
     buf = first_entry + i * (RF_QUEUE_DATA_ENTRY_HEADER_SIZE + length + pad);
     ((rfc_dataEntry_t*)buf)->status        = DATA_ENTRY_PENDING;        // Pending - starting state
     ((rfc_dataEntry_t*)buf)->config.type   = DATA_ENTRY_TYPE_GEN;       // General Data Entry

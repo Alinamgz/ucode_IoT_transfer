@@ -36,11 +36,11 @@
 /***** Defines *****/
 #include "rx_defines.h"
 
-/***** Prototypes *****/
-static void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
-
 /***** Variable declarations *****/
 #include "rx_glob_vars.h"
+
+/***** Prototypes *****/
+static void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
 
 /***** Function definitions *****/
 
@@ -180,8 +180,7 @@ void *mainThread(void *arg0) {
 }
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
-//    char write_this[60];
-//    char write_this[] = "gogi\r\n";
+
 
     if (e & RF_EventRxEntryDone) {
         /* Toggle pin to indicate RX */
@@ -200,14 +199,9 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
         /* Copy the payload + the status byte to the packet variable */
         memcpy(packet, packetDataPointer, (packetLength + 1));
 
-//        sprintf(write_this, "- %s%s%s -", recv_prefix, packet, recv_suffix);
 
         UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
         UART2_write(uart, packet, MAX_LENGTH, NULL);
-        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
-
-//          UART2_write(uart, write_this, sizeof(write_this), NULL);
-//        memset(write_this, '\0', sizeof(write_this));
 
         RFQueue_nextEntry();
     }

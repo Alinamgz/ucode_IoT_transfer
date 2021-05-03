@@ -44,6 +44,8 @@ GPIO1.pinInstance.$name = "CONFIG_PIN_RLED";
 UART21.$name               = "CONFIG_UART2_0";
 UART21.$hardware           = system.deviceData.board.components.XDS110UART;
 UART21.dataDirection       = "Send Only";
+UART21.rxRingBufferSize    = 64;
+UART21.txRingBufferSize    = 64;
 UART21.txPinInstance.$name = "CONFIG_PIN_0";
 
 /**
