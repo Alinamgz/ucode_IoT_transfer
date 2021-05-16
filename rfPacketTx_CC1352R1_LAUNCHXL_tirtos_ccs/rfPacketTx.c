@@ -43,31 +43,42 @@
 #include "tx_glob_vars.h"
 
 /***** Function definitions *****/
+void mx_generate_random_bytes(CryptoKey *entropyKey);
 
 void *mainThread(void *arg0) {
     char msg[] = "lorem ipsum\r\n";
     char msg_buf[BUF_SZ];
     uint8_t i = 0;
+    uint8_t trng_tst_key_material[PRIVATE_KEY_LEN];
+    CryptoKey trng_tst;
 
     RF_Params rfParams;
     RF_Params_init(&rfParams);
     RF_EventMask terminationReason;
 
     /* Open LED pins */
-    ledPinHandle = PIN_open(&ledPinState, pinTable);
-    if (ledPinHandle == NULL) {
-        while(1);
-    }
+//    ledPinHandle = PIN_open(&ledPinState, pinTable);
+//    if (ledPinHandle == NULL) {
+//        while(1);
+//    }
+    GPIO_init();
 
     UART2_Params_init(&uart_params);
     uart_params.baudRate = 115200;
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
-        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_GLED,!PIN_getOutputValue(CONFIG_PIN_GLED));
+//        PIN_setOutputValue(ledPinHandle, CONFIG_GPIO_LED_RED,!PIN_getOutputValue(CONFIG_GPIO_LED_RED));
         UART2_write(uart, msg, sizeof(msg), NULL);
     }
+    UART2_write(uart, "\ngonna chck key\r\n", sizeof("\ngonna chck key\r\n"), NULL);
 
-    RF_cmdPropTx.pktLen = PAYLOAD_LENGTH;
+    CryptoKeyPlaintext_initBlankKey(&trng_tst, trng_tst_key_material, PRIVATE_KEY_LEN);
+    mx_generate_random_bytes(&trng_tst);
+    UART2_write(uart, "\nkey_tst\n", 9, NULL);
+    UART2_write(uart, &trng_tst.u.plaintext.keyMaterial, trng_tst.u.plaintext.keyLength, NULL);
+
+
+    RF_cmdPropTx.pktLen = MSG_LEN;
     RF_cmdPropTx.pPkt = packet;
     RF_cmdPropTx.startTrigger.triggerType = TRIG_NOW;
 
@@ -81,11 +92,11 @@ void *mainThread(void *arg0) {
     /* Set the frequency */
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
-    int payload_sz = PAYLOAD_LENGTH - sizeof(TX_ID) - 3;
+    int payload_sz = MSG_LEN - sizeof(TX_ID) - 3;
 
     while(1) {
         memset(msg_buf, 0, BUF_SZ);
-        memset(packet, 0, PAYLOAD_LENGTH);
+        memset(packet, 0, MSG_LEN);
 
         memcpy(packet, TX_ID, sizeof(TX_ID));
         packet[sizeof(TX_ID)] = '1';
@@ -175,7 +186,7 @@ void *mainThread(void *arg0) {
         }
 
 #ifndef POWER_MEASUREMENT
-        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_GLED,!PIN_getOutputValue(CONFIG_PIN_GLED));
+//        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_GLED,!PIN_getOutputValue(CONFIG_PIN_GLED));
 #endif
         /* Power down the radio */
         RF_yield(rfHandle);

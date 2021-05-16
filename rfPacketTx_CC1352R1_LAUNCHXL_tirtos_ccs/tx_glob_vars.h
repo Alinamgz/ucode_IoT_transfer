@@ -11,7 +11,7 @@ static UART2_Params uart_params;
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
 
-static uint8_t packet[PAYLOAD_LENGTH];
+static uint8_t packet[MSG_LEN];
 static uint16_t seqNumber;
 static uint8_t parts;
 
@@ -19,7 +19,7 @@ static uint8_t parts;
  * Application LED pin configuration table:
  *   - All LEDs board LEDs are off.
  */
-PIN_Config pinTable[] = {
-    CONFIG_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    PIN_TERMINATE
-};
+//PIN_Config pinTable[] = {
+//    CONFIG_GPIO_LED_RED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+//    PIN_TERMINATE
+//};
