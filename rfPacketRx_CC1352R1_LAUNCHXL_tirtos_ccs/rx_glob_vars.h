@@ -1,12 +1,17 @@
  #pragma once
 
-/***** Variable declarations *****/
-static RF_Object rfObject;
-static RF_Handle rfHandle;
 
-/* Pin driver handle */
-static PIN_Handle ledPinHandle;
-static PIN_State ledPinState;
+// Keys
+uint8_t peer_pub_key_material[PUBLIC_KEY_LEN];
+CryptoKey peer_pub_key;
+
+
+/***** Variable declarations *****/
+RF_Handle rfHandle;
+RF_Object rfObject;
+RF_EventMask terminationReason;
+uint32_t cmdStatus;
+
 
 /* Buffer which contains all Data Entries for receiving data.
  * Pragmas are needed to make sure this buffer is 4 byte aligned (requirement from the RF Core) */
@@ -39,20 +44,13 @@ static uint8_t packetLength;
 static uint8_t* packetDataPointer;
 
 
-static uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
+ uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
 
 //
-static UART2_Handle uart;
-static UART2_Params uart_params;
-static char recv_prefix[] = "\r\nreceived: ";
-static char recv_suffix[] = "\r\n----------------\n";
+ UART2_Handle uart;
+ UART2_Params uart_params;
+
 //
 
-/*
- * Application LED pin configuration table:
- *   - All LEDs board LEDs are off.
- */
-PIN_Config pinTable[] = {
-    CONFIG_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    PIN_TERMINATE
-};
+
+

@@ -18,11 +18,11 @@ CCOPTS = --endian=little -mv7M4 --abi=eabi --float_support=fpv4spd16 -q -ms --op
 
 BIOS_INC = -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/"
 ANNEX_INCS =  -I/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/ti/posix/ccs
-INCS = $(BIOS_INC) $(ANNEX_INCS) -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/" -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/" -I"/Volumes/Storage/shared/amazur/xdctools_3_62_00_08_core/packages/" -I"../" -I"/packages//"  -I/Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/include 
+INCS = $(BIOS_INC) $(ANNEX_INCS) -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/source/" -I"/Volumes/Storage/shared/amazur/ccs/utils/simplelink_cc13x2_26x2_sdk_4_40_04_04/kernel/tirtos/packages/" -I"/Volumes/Storage/shared/amazur/xdctools_3_62_00_08_core/packages/" -I"../" -I"/packages//"  -I/Volumes/Storage/shared/amazur/ccs/utils/ti-cgt-arm_20.2.4.LTS/include 
 
-CC = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
-ASM = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
-AR = /Volumes/Storage/shared/amazur/ccs/tools/compiler/ti-cgt-arm_20.2.4.LTS/bin/armar rq
+CC = /Volumes/Storage/shared/amazur/ccs/utils/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
+ASM = /Volumes/Storage/shared/amazur/ccs/utils/ti-cgt-arm_20.2.4.LTS/bin/armcl -c $(CCOPTS)
+AR = /Volumes/Storage/shared/amazur/ccs/utils/ti-cgt-arm_20.2.4.LTS/bin/armar rq
 
 DEL = rm -f
 CP = cp -f

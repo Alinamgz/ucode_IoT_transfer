@@ -2,9 +2,10 @@
 
 /***** Includes *****/
 /* Standard C Libraries */
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <string.h>
+#include <string.h>
 
 /* TI Drivers */
 #include <ti/drivers/rf/RF.h>
