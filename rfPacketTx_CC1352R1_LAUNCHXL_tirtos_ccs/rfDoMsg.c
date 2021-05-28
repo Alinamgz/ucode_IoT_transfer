@@ -9,6 +9,7 @@
 #include "tx_glob_vars.h"
 
 /***** Function definitions *****/
+#include "tx_functions.h"
 
 void mx_do_msg(void) {
     char msg_buf[MAX_LENGTH - HEADER_LEN];

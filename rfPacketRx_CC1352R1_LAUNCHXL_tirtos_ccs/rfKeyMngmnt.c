@@ -435,7 +435,7 @@ void mx_handle_keypkg(uint8_t *packet, CryptoKey *peer_pub_key) {
 
     /* Hash the header and public key component of the message. Pass NULL to use the default parameters */
     do_sha(packet, HEADER_LEN + PUBLIC_KEY_LEN, hash_buf);
-UART2_write(uart, "sha done\n\r", sizeof("sha done\n\r"), NULL);
+UART2_write(uart, "\n\rsha done\n\r", sizeof("\n\rsha done\n\r"), NULL);
 
     /* Verify signature of public key */
     ECDSA_OperationVerify_init(&operation_verify);
@@ -499,8 +499,8 @@ void mx_do_keys(void) {
     mx_generate_random_bytes(&private_key);
     mx_generate_public_key(&private_key, &public_key);
 
-    mx_check_keys(&private_key, &public_key, &peer_pub_key);
-    mx_create_publick_key_pkg(packet, &private_key, &public_key);
+//    mx_check_keys(&private_key, &public_key, &peer_pub_key);
+//    mx_create_publick_key_pkg(packet, &private_key, &public_key);
 
 
     //   ===========================  !!! JUST FOR TEST !!!  ==============================

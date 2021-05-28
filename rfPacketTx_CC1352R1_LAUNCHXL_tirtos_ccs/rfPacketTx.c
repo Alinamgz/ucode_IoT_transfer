@@ -41,6 +41,7 @@
 #include "tx_glob_vars.h"
 
 /***** Function definitions *****/
+#include "tx_functions.h"
 
 static inline void mx_init_drivers(void) {
     AESCCM_init();

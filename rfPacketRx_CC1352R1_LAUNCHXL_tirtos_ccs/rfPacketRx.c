@@ -98,6 +98,7 @@ static inline void mx_config_RF(void) {
     RF_cmdPropTx.pPkt = packet;
     RF_cmdPropTx.startTrigger.triggerType = TRIG_NOW;
 
+
     if (RFQueue_defineQueue(&dataQueue,
                             rxDataEntryBuffer,
                             sizeof(rxDataEntryBuffer),
@@ -179,89 +180,121 @@ void *mainThread(void *arg0) {
 //    RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
     /* Enter RX mode and stay forever in RX */
-     terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropRx,
+    while (1) {
+//        if (packet[0] == KEY_PKG)
+//            mx_handle_keypkg(packet, &peer_pub_key);
+
+        terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropRx,
                                                RF_PriorityNormal, &callback,
                                                RF_EventRxEntryDone);
-     UART2_write(uart, "\nr\r------------------\n\r", sizeof("\nr\r------------------\n\r"), NULL);
-     mx_handle_keypkg(packet, &peer_pub_key);
-
-//
-//    switch(terminationReason) {
-//        case RF_EventLastCmdDone:
-//            // A stand-alone radio operation command or the last radio
-//            // operation command in a chain finished.
-//            break;
-//        case RF_EventCmdCancelled:
-//            // Command cancelled before it was started; it can be caused
-//            // by RF_cancelCmd() or RF_flushCmd().
-//            break;
-//        case RF_EventCmdAborted:
-//            // Abrupt command termination caused by RF_cancelCmd() or
-//            // RF_flushCmd().
-//            break;
-//        case RF_EventCmdStopped:
-//            // Graceful command termination caused by RF_cancelCmd() or
-//            // RF_flushCmd().
-//            break;
-//        default:
-//            // Uncaught error event
-//            while(1);
-//    }
-//
-//    uint32_t cmdStatus = ((volatile RF_Op*)&RF_cmdPropRx)->status;
-//    switch(cmdStatus) {
-//        case PROP_DONE_OK:
-//            // Packet received with CRC OK
-//            break;
-//        case PROP_DONE_RXERR:
-//            // Packet received with CRC error
-//            break;
-//        case PROP_DONE_RXTIMEOUT:
-//            // Observed end trigger while in sync search
-//            break;
-//        case PROP_DONE_BREAK:
-//            // Observed end trigger while receiving packet when the command is
-//            // configured with endType set to 1
-//            break;
-//        case PROP_DONE_ENDED:
-//            // Received packet after having observed the end trigger; if the
-//            // command is configured with endType set to 0, the end trigger
-//            // will not terminate an ongoing reception
-//            break;
-//        case PROP_DONE_STOPPED:
-//            // received CMD_STOP after command started and, if sync found,
-//            // packet is received
-//            break;
-//        case PROP_DONE_ABORT:
-//            // Received CMD_ABORT after command started
-//            break;
-//        case PROP_ERROR_RXBUF:
-//            // No RX buffer large enough for the received data available at
-//            // the start of a packet
-//            break;
-//        case PROP_ERROR_RXFULL:
-//            // Out of RX buffer space during reception in a partial read
-//            break;
-//        case PROP_ERROR_PAR:
-//            // Observed illegal parameter
-//            break;
-//        case PROP_ERROR_NO_SETUP:
-//            // Command sent without setting up the radio in a supported
-//            // mode using CMD_PROP_RADIO_SETUP or CMD_RADIO_SETUP
-//            break;
-//        case PROP_ERROR_NO_FS:
-//            // Command sent without the synthesizer being programmed
-//            break;
-//        case PROP_ERROR_RXOVF:
-//            // RX overflow observed during operation
-//            break;
-//        default:
-//            // Uncaught error event - these could come from the
-//            // pool of states defined in rf_mailbox.h
-//            while(1);
+//        UART2_write(uart, "\n\rchck\n\r", 8, NULL);
 //    }
 
-    while(1);
+
+//
+    UART2_write(uart, "\n\rhelp\n\r", 8, NULL);
+
+    switch(terminationReason) {
+        case RF_EventLastCmdDone:
+            UART2_write(uart, "\n\rOK\n\r", 6, NULL);
+//                mx_handle_keypkg(packet, &peer_pub_key);
+            // A stand-alone radio operation command or the last radio
+            // operation command in a chain finished.
+            break;
+        case RF_EventCmdCancelled:
+            UART2_write(uart, "\n\rRF_EventCmdCancelled\n\r", sizeof("\n\rRF_EventCmdCancelled\n\r"), NULL);
+            // Command cancelled before it was started; it can be caused
+            // by RF_cancelCmd() or RF_flushCmd().
+            break;
+        case RF_EventCmdAborted:
+            UART2_write(uart, "\n\rRF_EventCmdAborted\n\r", sizeof("\n\rRF_EventCmdAborted\n\r"), NULL);
+            // Abrupt command termination caused by RF_cancelCmd() or
+            // RF_flushCmd().
+            break;
+        case RF_EventCmdStopped:
+            UART2_write(uart, "\n\rRF_EventCmdStopped\n\r", sizeof("\n\rRF_EventCmdStopped\n\r"), NULL);
+            // Graceful command termination caused by RF_cancelCmd() or
+            // RF_flushCmd().
+            break;
+        default:
+            UART2_write(uart, "\n\rdefault\n\r", sizeof("\n\rdefault\n\r"), NULL);
+            // Uncaught error event
+            while(1);
+    }
+////
+    uint32_t cmdStatus = ((volatile RF_Op*)&RF_cmdPropRx)->status;
+    switch(cmdStatus) {
+        case PROP_DONE_OK:
+            UART2_write(uart, "\n\rok\n\r", 6, NULL);
+//                mx_handle_keypkg(packet, &peer_pub_key);
+            // Packet received with CRC OK
+            break;
+        case PROP_DONE_RXERR:
+            UART2_write(uart, "\n\r status PROP_DONE_RXERR\n\r", sizeof("\n\r status PROP_DONE_RXERR\n\r"), NULL);
+            // Packet received with CRC error
+            break;
+        case PROP_DONE_RXTIMEOUT:
+            UART2_write(uart, "\n\r status PROP_DONE_RXTIMEOUT\n\r", sizeof("\n\r status PROP_DONE_RXTIMEOUT\n\r"), NULL);
+            // Observed end trigger while in sync search
+            break;
+        case PROP_DONE_BREAK:
+            UART2_write(uart, "\n\r status PROP_DONE_BREAK\n\r", sizeof("\n\r status PROP_DONE_BREAK\n\r"), NULL);
+            // Observed end trigger while receiving packet when the command is
+            // configured with endType set to 1
+            break;
+        case PROP_DONE_ENDED:
+            UART2_write(uart, "\n\r status PROP_DONE_ENDED\n\r", sizeof("\n\r status PROP_DONE_ENDED\n\r"), NULL);
+            // Received packet after having observed the end trigger; if the
+            // command is configured with endType set to 0, the end trigger
+            // will not terminate an ongoing reception
+            break;
+        case PROP_DONE_STOPPED:
+            UART2_write(uart, "\n\r status PROP_DONE_STOPPED\n\r", sizeof("\n\r status PROP_DONE_STOPPED\n\r"), NULL);
+            // received CMD_STOP after command started and, if sync found,
+            // packet is received
+            break;
+        case PROP_DONE_ABORT:
+            UART2_write(uart, "\n\r status PROP_DONE_ABORT\n\r", sizeof("\n\r status PROP_DONE_ABORT\n\r"), NULL);
+            // Received CMD_ABORT after command started
+            break;
+        case PROP_ERROR_RXBUF:
+            UART2_write(uart, "\n\r status PROP_ERROR_RXBUF\n\r", sizeof("\n\r status PROP_ERROR_RXBUF\n\r"), NULL);
+            // No RX buffer large enough for the received data available at
+            // the start of a packet
+            break;
+        case PROP_ERROR_RXFULL:
+            UART2_write(uart, "\n\r status PROP_ERROR_RXFULL\n\r", sizeof("\n\r status PROP_ERROR_RXFULL\n\r"), NULL);
+            // Out of RX buffer space during reception in a partial read
+            break;
+        case PROP_ERROR_PAR:
+            UART2_write(uart, "\n\r status PROP_ERROR_PAR\n\r", sizeof("\n\r status PROP_ERROR_PAR\n\r"), NULL);
+            // Observed illegal parameter
+            break;
+        case PROP_ERROR_NO_SETUP:
+            UART2_write(uart, "\n\r status PROP_ERROR_NO_SETUP\n\r", sizeof("\n\r status PROP_ERROR_NO_SETUP\n\r"), NULL);
+            // Command sent without setting up the radio in a supported
+            // mode using CMD_PROP_RADIO_SETUP or CMD_RADIO_SETUP
+            break;
+        case PROP_ERROR_NO_FS:
+            UART2_write(uart, "\n\r status PROP_ERROR_NO_FS\n\r", sizeof("\n\r status PROP_ERROR_NO_FS\n\r"), NULL);
+            // Command sent without the synthesizer being programmed
+
+            break;
+        case PROP_ERROR_RXOVF:
+            UART2_write(uart, "\n\r status PROP_ERROR_RXOVF\n\r", sizeof("\n\r status PROP_ERROR_RXOVF\n\r"), NULL);
+            // RX overflow observed during operation
+            break;
+        default:
+            UART2_write(uart, "\n\r status default\n\r", sizeof("\n\r status default\n\r"), NULL);
+            // Uncaught error event - these could come from the
+            // pool of states defined in rf_mailbox.h
+            while(1);
+    }
+
+        UART2_write(uart, "\n\r--------------------------\n\r", sizeof("\n\r--------------------------\n\r"), NULL);
+    }
+
+//    while(1);
 }
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
@@ -271,44 +304,53 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
 //    int_fast16_t rslt;
 
     if (e & RF_EventRxEntryDone) {
-        /* Toggle pin to indicate RX */
-        GPIO_toggle(CONFIG_GPIO_LED_GREEN);
-//        GPIO_toggle(CONFIG_GPIO_LED_RED);
 
-        /* Get current unhandled data entry */
-        currentDataEntry = RFQueue_getDataEntry();
+            /* Toggle pin to indicate RX */
+            GPIO_toggle(CONFIG_GPIO_LED_GREEN);
+    //        GPIO_toggle(CONFIG_GPIO_LED_RED);
 
-        /* Handle the packet data, located at &currentDataEntry->data:
-         * - Length is the first byte with the current configuration
-         * - Data starts from the second byte */
-        packetLength      = *(uint8_t*)(&currentDataEntry->data);
-        packetDataPointer = (uint8_t*)(&currentDataEntry->data + 1);
+            /* Get current unhandled data entry */
+            currentDataEntry = RFQueue_getDataEntry();
 
-        /* Copy the payload + the status byte to the packet variable */
-        memset(packet,0, sizeof(packet));
-        memcpy(packet, packetDataPointer, (packetLength + 1));
+            /* Handle the packet data, located at &currentDataEntry->data:
+             * - Length is the first byte with the current configuration
+             * - Data starts from the second byte */
+            packetLength      = *(uint8_t*)(&currentDataEntry->data);
+            packetDataPointer = (uint8_t*)(&currentDataEntry->data + 1);
 
-        switch(*packetDataPointer) {
-            case KEY_PKG:
-                UART2_write(uart, "\r\nrecv key:\n\r", sizeof("\r\nrecv key:\n\r"), NULL);
-                GPIO_toggle(CONFIG_GPIO_LED_RED);
-//                UART2_write(uart, packet, sizeof(packet), NULL);
-//                UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+            /* Copy the payload + the status byte to the packet variable */
+            memset(packet,0, sizeof(packet));
+            memcpy(packet, packetDataPointer, (packetLength + 1));
 
-//                mx_handle_keypkg(packet, &peer_pub_key);
-                return;
-//                GPIO_toggle(CONFIG_GPIO_LED_RED);
-//                break;
-            case MSG_PKG:
-                UART2_write(uart, packet, sizeof(packet), NULL);
-                break;
-            default:
-                UART2_write(uart, "!!! ERR: unknown pkg type !!!\\n\r", sizeof("!!! ERR: unknown pkg type !!!\\n\r"), NULL);
-                break;
-        }
+            switch(*packetDataPointer) {
+                case KEY_PKG:
+                    UART2_write(uart, "\r\nrecv key:\n\r", sizeof("\r\nrecv key:\n\r"), NULL);
+                    GPIO_toggle(CONFIG_GPIO_LED_RED);
+                    return;
+//                    return;
+//                    UART2_write(uart, packet, sizeof(packet), NULL);
+//                    while (RFQueue_nextEntry() == DATA_ENTRY_FINISHED);
 
-        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+    //                UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+
+//                    mx_handle_keypkg(packet, &peer_pub_key);
+    //                GPIO_toggle(CONFIG_GPIO_LED_RED);
+//                    break;
+                case MSG_PKG:
+                    UART2_write(uart, packet, sizeof(packet), NULL);
+                    break;
+                default:
+                    UART2_write(uart, "!!! ERR: unknown pkg type !!!\\n\r", sizeof("!!! ERR: unknown pkg type !!!\\n\r"), NULL);
+                    break;
+            }
+
+            UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+            UART2_write(uart, "NEWLINE", sizeof("NEWLINE"), NULL);
 
         RFQueue_nextEntry();
+            UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+            UART2_write(uart, "NEW", sizeof("NEW"), NULL);
+
+
     }
 }
