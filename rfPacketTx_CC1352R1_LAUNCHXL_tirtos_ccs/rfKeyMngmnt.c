@@ -14,9 +14,12 @@
 
 
 
-inline void do_sha (uint8_t* src, uint32_t src_len, uint8_t *rslt_buf) {
+inline void do_sha (uint8_t* src, uint32_t src_len, uint8_t *rslt_buf, uint8_t chck) {
     SHA2_Handle handle_sha2;
     int_fast16_t rslt;
+
+    char status[4];
+    int i = 0;
 
     /* Hash the sharedSecret to a 256-bit buffer */
     handle_sha2 = SHA2_open(CONFIG_SHA2_0, NULL);
@@ -114,6 +117,8 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
 
     uint8_t hashed_data_buf[PRIVATE_KEY_LEN];
 
+    uint8_t chck[] = LOREM_IPSUM;
+
     char check_msg[5];
     int i;
 
@@ -124,9 +129,23 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
 //    key_pkg[PKG_LEN_BYTE] = KEY_PKG_LEN;
     memcpy(&key_pkg[HEADER_LEN], public_key->u.plaintext.keyMaterial, public_key->u.plaintext.keyLength);
 
-/* Perform SHA-2 computation on the data to be signed */
-    do_sha(key_pkg, HEADER_LEN + PRIVATE_KEY_LEN, hashed_data_buf);
+    //================================== Check hash ========================================================
+        do_sha(chck, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
 
+        UART2_write(uart, "CHECK HASH\n", sizeof("CHECK HASH\n"), NULL);
+        for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
+            memset(check_msg, 0, sizeof(check_msg));
+            sprintf(check_msg, " %d", hashed_data_buf[i]);
+            UART2_write(uart, check_msg, sizeof(check_msg), NULL);
+        }
+        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+    //===================================            =======================================================
+
+/* Perform SHA-2 computation on the data to be signed */
+
+
+        memset(hashed_data_buf, 0, sizeof(hashed_data_buf));
+    do_sha(key_pkg, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
 
 UART2_write(uart, "PUB KEY GEN hash\n", sizeof("PUB KEY GEN hash\n"), NULL);
     for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
@@ -297,7 +316,7 @@ void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, Cry
     /* Hash the sharedSecret to a 256-bit buffer */
     /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
      * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
-    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest);
+    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
 
     /* AES keys are 128-bit long, so truncate the generated hash */
     memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);

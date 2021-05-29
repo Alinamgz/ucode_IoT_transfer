@@ -73,7 +73,7 @@ inline void mx_say_err(char *where_err) {
 static inline void mx_config_UART2(void) {
     UART2_Params_init(&uart_params);
     uart_params.baudRate = 115200;
-    uart_params.writeMode = UART2_Mode_NONBLOCKING;
+//    uart_params.writeMode = UART2_Mode_NONBLOCKING;
 
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
@@ -117,7 +117,8 @@ static inline void mx_config_RF(void) {
     RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
     /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
     RF_cmdPropRx.maxPktLen = KEY_PKG_LEN;
-    RF_cmdPropRx.pktConf.bRepeatOk = 1;
+//    RF_cmdPropRx.pktConf.bRepeatOk = 1;
+    RF_cmdPropRx.pktConf.bRepeatOk = 0;
     RF_cmdPropRx.pktConf.bRepeatNok = 1;
 
     /* Request access to the radio */
@@ -180,24 +181,18 @@ void *mainThread(void *arg0) {
 //    RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 
     /* Enter RX mode and stay forever in RX */
-    while (1) {
-//        if (packet[0] == KEY_PKG)
-//            mx_handle_keypkg(packet, &peer_pub_key);
 
+    while (1) {
         terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropRx,
                                                RF_PriorityNormal, &callback,
                                                RF_EventRxEntryDone);
-//        UART2_write(uart, "\n\rchck\n\r", 8, NULL);
-//    }
-
-
-//
-    UART2_write(uart, "\n\rhelp\n\r", 8, NULL);
 
     switch(terminationReason) {
         case RF_EventLastCmdDone:
             UART2_write(uart, "\n\rOK\n\r", 6, NULL);
-//                mx_handle_keypkg(packet, &peer_pub_key);
+            if (packet[0] == KEY_PKG) {
+                mx_handle_keypkg(packet, &peer_pub_key);
+            }
             // A stand-alone radio operation command or the last radio
             // operation command in a chain finished.
             break;
@@ -226,7 +221,6 @@ void *mainThread(void *arg0) {
     switch(cmdStatus) {
         case PROP_DONE_OK:
             UART2_write(uart, "\n\rok\n\r", 6, NULL);
-//                mx_handle_keypkg(packet, &peer_pub_key);
             // Packet received with CRC OK
             break;
         case PROP_DONE_RXERR:
@@ -326,31 +320,18 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
                 case KEY_PKG:
                     UART2_write(uart, "\r\nrecv key:\n\r", sizeof("\r\nrecv key:\n\r"), NULL);
                     GPIO_toggle(CONFIG_GPIO_LED_RED);
-                    return;
-//                    return;
-//                    UART2_write(uart, packet, sizeof(packet), NULL);
-//                    while (RFQueue_nextEntry() == DATA_ENTRY_FINISHED);
-
-    //                UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-
-//                    mx_handle_keypkg(packet, &peer_pub_key);
-    //                GPIO_toggle(CONFIG_GPIO_LED_RED);
-//                    break;
+                    break;
                 case MSG_PKG:
-                    UART2_write(uart, packet, sizeof(packet), NULL);
+                    UART2_write(uart, "\r\nrecv msg:\n\r", sizeof("\r\nrecv msg:\n\r"), NULL);
                     break;
                 default:
                     UART2_write(uart, "!!! ERR: unknown pkg type !!!\\n\r", sizeof("!!! ERR: unknown pkg type !!!\\n\r"), NULL);
                     break;
             }
 
-            UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-            UART2_write(uart, "NEWLINE", sizeof("NEWLINE"), NULL);
+        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
 
         RFQueue_nextEntry();
-            UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-            UART2_write(uart, "NEW", sizeof("NEW"), NULL);
-
 
     }
 }

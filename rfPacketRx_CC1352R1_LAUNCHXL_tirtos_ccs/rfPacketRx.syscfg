@@ -85,8 +85,6 @@ TRNG1.$name = "CONFIG_TRNG_0";
 UART21.$name               = "CONFIG_UART2_0";
 UART21.$hardware           = system.deviceData.board.components.XDS110UART;
 UART21.dataDirection       = "Send Only";
-UART21.txRingBufferSize    = 140;
-UART21.rxRingBufferSize    = 140;
 UART21.txPinInstance.$name = "CONFIG_PIN_0";
 
 /**
