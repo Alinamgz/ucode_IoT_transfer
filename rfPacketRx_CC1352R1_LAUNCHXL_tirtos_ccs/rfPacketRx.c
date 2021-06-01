@@ -180,13 +180,13 @@ void *mainThread(void *arg0) {
 }
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
-//    char write_this[60];
-//    char write_this[] = "gogi\r\n";
+//    char msg_buf[120]
+//    char cur_position = 0;
+//    char sender[8];
 
     if (e & RF_EventRxEntryDone) {
         /* Toggle pin to indicate RX */
-        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED,
-                           !PIN_getOutputValue(CONFIG_PIN_RLED));
+        PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, !PIN_getOutputValue(CONFIG_PIN_RLED));
 
         /* Get current unhandled data entry */
         currentDataEntry = RFQueue_getDataEntry();
@@ -198,16 +198,27 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
         packetDataPointer = (uint8_t*)(&currentDataEntry->data + 1);
 
         /* Copy the payload + the status byte to the packet variable */
-        memcpy(packet, packetDataPointer, (packetLength + 1));
+//        memcpy(packet, packetDataPointer, (packetLength + 1));
 
-//        sprintf(write_this, "- %s%s%s -", recv_prefix, packet, recv_suffix);
+//        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
+//        UART2_write(uart, packet, MAX_LENGTH, NULL);
+//        UART2_write(uart, packetDataPointer, packetLength - 1, NULL);
 
-        UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
-        UART2_write(uart, packet, MAX_LENGTH, NULL);
-        UART2_write(uart, recv_suffix, sizeof(recv_suffix), NULL);
-
-//          UART2_write(uart, write_this, sizeof(write_this), NULL);
-//        memset(write_this, '\0', sizeof(write_this));
+        if (packetDataPointer[8] <= packetDataPointer[9]) {
+            if (packetDataPointer[8] == 1) {
+                UART2_write(uart, "msg from ", 9, NULL);
+                UART2_write(uart, packetDataPointer,  8, NULL);
+                UART2_write(uart, ": ", 2, NULL);
+            }
+//            cur_position = 19 * (packetDataPointer[8] - 1);
+//           memcpy(&msg_buf[cur_position], &packetDataPointer[10], packetLength - 10);
+//           UART2_write(uart, msg_buf, sizeof(msg_buf), NULL);
+            UART2_write(uart, &packetDataPointer[10],  packetLength - 10, NULL);
+        }
+        else {
+//            UART2_write(uart, recv_prefix, sizeof(recv_prefix), NULL);
+            UART2_write(uart, "\r\n", 2, NULL);
+        }
 
         RFQueue_nextEntry();
     }

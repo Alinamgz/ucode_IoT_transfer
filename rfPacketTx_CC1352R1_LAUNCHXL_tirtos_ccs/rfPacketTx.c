@@ -35,8 +35,6 @@
 #include "tx_includes.h"
 
 /***** Defines *****/
-
-/* Do power measurement */
 #include "tx_defines.h"
 
 /***** Prototypes *****/
@@ -80,36 +78,39 @@ void *mainThread(void *arg0) {
 
     /* Set the frequency */
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
-
+char input;
     while(1) {
         memset(msg_buf, 0, 120);
         memset(packet, 0, PAYLOAD_LENGTH);
 
         memcpy(packet, TX_ID, 8);
-        packet[8] = '0';
-        packet[9] = '0';
+        packet[8] = 0;
+        packet[9] = 3;
 
-        for (i = 0; i < 119; i++) {
-            if (i % 19 == 1) {
-//                UART2_write(uart, "op", 2, NULL);
-                packet[9]++;
+        memcpy(msg_buf, TEST_MSG, sizeof(TEST_MSG));
+
+        UART2_read(uart, &input, 1, NULL);
+        UART2_write(uart, "sent\r\n", 6, NULL);
+//        for (i = 0; i < 119; i++) {
+//            if (i % 19 == 1) {
+//                packet[9]++;
+//            }
+//
+//            UART2_read(uart, &msg_buf[i], 1, NULL);
+//            UART2_write(uart, &msg_buf[i], 1, NULL);
+//
+//            if (msg_buf[i] == '\r') {
+//                UART2_write(uart, "\n", 1, NULL);
+//                break;
+//            }
+//        }
+        if (input == '\r') {
+//            for (i = 0; i <= packet[9] - '1'; i++) {
+            for (i = 0; i <= packet[9]; i++) {
+                packet[8] = 1 + i;
+                memcpy(&packet[10], &msg_buf[19 * i], 19);
+                terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
             }
-
-            UART2_read(uart, &msg_buf[i], 1, NULL);
-            UART2_write(uart, &msg_buf[i], 1, NULL);
-
-            if (msg_buf[i] == '\r') {
-                UART2_write(uart, "\n", 1, NULL);
-                break;
-            }
-        }
-
-        for (i = 0; i <= packet[9] - '1'; i++) {
-//            UART2_write(uart, "\r\n", 2, NULL);
-            packet[8] = '1' + i;
-            memcpy(&packet[10], &msg_buf[19 * i], 19);
-//            UART2_write(uart, packet, 30, NULL);
-            terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
         }
 
 
