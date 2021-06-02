@@ -70,12 +70,12 @@ GPIO2.pinInstance.$name = "CONFIG_PIN_2";
 
 GPIO3.$hardware         = system.deviceData.board.components["BTN-1"];
 GPIO3.mode              = "Dynamic";
-GPIO3.$name             = "CONFIG_GPIO_KEY_RECV_BTN";
+GPIO3.$name             = "CONFIG_GPIO_RECV_BTN";
 GPIO3.pinInstance.$name = "CONFIG_PIN_3";
 
-GPIO4.$name             = "CONFIG_GPIO_KEY_SEND_BTN";
 GPIO4.$hardware         = system.deviceData.board.components["BTN-2"];
 GPIO4.mode              = "Dynamic";
+GPIO4.$name             = "CONFIG_GPIO_SEND_BTN";
 GPIO4.pinInstance.$name = "CONFIG_PIN_4";
 
 SHA21.$name = "CONFIG_SHA2_0";

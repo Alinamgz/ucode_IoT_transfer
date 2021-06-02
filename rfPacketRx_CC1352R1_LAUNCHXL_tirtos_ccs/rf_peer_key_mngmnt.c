@@ -20,6 +20,8 @@ static void mx_generate_aes_key(CryptoKey *my_private_key,
 								CryptoKey *symetric_key);
 
 void mx_recv_n_proceed_peer_key(void) {
+    UART2_write(uart, "--- gonna RECV ---\n", sizeof("--- gonna RECV ---\n"), NULL);
+
 	uint32_t cmdStatus;
 	terminationReason = RF_runCmd(rfHandle,
 								  (RF_Op*)&RF_cmdPropRx,
@@ -37,7 +39,8 @@ void mx_recv_n_proceed_peer_key(void) {
 							&shared_secret,
 							&symmetric_key);
 		//  ---------- ?????? ------------------
-//		mx_do_msg();
+		mx_share_my_pubkey()
+		mx_do_msg();
 	}
 	else {
 		mx_say_err("peer key recv n proceed");

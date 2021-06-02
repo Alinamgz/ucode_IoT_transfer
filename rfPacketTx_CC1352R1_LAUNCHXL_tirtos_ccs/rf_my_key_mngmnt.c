@@ -364,8 +364,8 @@ void mx_do_my_keys(void) {
     mx_generate_random_bytes(&private_key);
     mx_generate_public_key(&private_key, &public_key);
 
-    mx_check_keys(&private_key, &public_key, &peer_pub_key);
-    mx_create_publick_key_pkg(packet, &private_key, &public_key);
+//    mx_check_keys(&private_key, &public_key, &peer_pub_key);
+//    mx_create_publick_key_pkg(packet, &private_key, &public_key);
 
 
     //   ===========================  !!! JUST FOR TEST !!!  ==============================
@@ -377,5 +377,5 @@ void mx_do_my_keys(void) {
 //        mx_generate_aes_key(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
 
 //UART2_write(uart, "now have to send key pkg \n\r", sizeof("now have to send key pkg \n\r"), NULL);
-    mx_send_key();
+//    mx_send_key();
 }

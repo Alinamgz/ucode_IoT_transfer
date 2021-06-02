@@ -1,4 +1,4 @@
-lear/*
+/*
  * Copyright (c) 2019, Texas Instruments Incorporated
  * All rights reserved.
  *
@@ -43,14 +43,11 @@ lear/*
 /***** Function definitions *****/
 #include "tx_functions.h"
 
-static inline void mx_init_drivers(void) {
-    AESCCM_init();
-    ECDH_init();
-    ECDSA_init();
-    GPIO_init();
-    SHA2_init();
-    TRNG_init();
-}
+static inline void mx_init_drivers(void);
+static inline void mx_config_UART2(void);
+static inline void mx_config_RF(void);
+static inline void btn_callback(uint_least8_t index);
+static inline void mx_config_btns(void);
 
 inline void mx_say_err(char *where_err) {
     char err_msg[64];
@@ -63,6 +60,41 @@ inline void mx_say_err(char *where_err) {
         GPIO_toggle(CONFIG_GPIO_LED_RED);
         usleep(250000);
     }
+}
+
+void *mainThread(void *arg0) {
+    mx_init_drivers();
+    mx_config_UART2();
+    mx_config_RF();
+    mx_config_btns();
+
+//    ------------ -- KEYS STUFF -- ---------------
+    mx_do_my_keys();
+
+    /* Wait for button0 pressed before proceeding */
+    Semaphore_pend(send_btn_pressed, BIOS_WAIT_FOREVER);
+    mx_share_my_pub_key();
+
+    Semaphore_pend(recv_btn_pressed, BIOS_WAIT_FOREVER);
+    mx_recv_n_proceed_peer_key();
+
+
+//    -------------- ------------ -----------------
+
+//    accept user input, split into msgs and send
+    mx_do_msg();
+
+    return NULL;
+}
+//    -------------- ------------ -----------------
+
+static inline void mx_init_drivers(void) {
+    AESCCM_init();
+    ECDH_init();
+    ECDSA_init();
+    GPIO_init();
+    SHA2_init();
+    TRNG_init();
 }
 
 // ========================== UART_2 ===============================
@@ -81,6 +113,7 @@ static inline void mx_config_UART2(void) {
     }
 }
 
+
 // ==========================   RF   ===============================
 static inline void mx_config_RF(void) {
     RF_Params rfParams;
@@ -89,7 +122,7 @@ static inline void mx_config_RF(void) {
     RF_cmdPropTx.pktLen = KEY_PKG_LEN;
     RF_cmdPropTx.pPkt = packet;
     RF_cmdPropTx.startTrigger.triggerType = TRIG_NOW;
-//============================================================================
+//---------------------------------------------------------------------
    if (RFQueue_defineQueue(&dataQueue,
                                rxDataEntryBuffer,
                                sizeof(rxDataEntryBuffer),
@@ -111,7 +144,7 @@ static inline void mx_config_RF(void) {
        RF_cmdPropRx.pktConf.bRepeatOk = 0;
        RF_cmdPropRx.pktConf.bRepeatNok = 1;
 
-//============================================================================
+//---------------------------------------------------------------
     /* Request access to the radio */
 #if defined(DeviceFamily_CC26X0R2)
     rfHandle = RF_open(&rfObject, &RF_prop, (RF_RadioSetup*)&RF_cmdPropRadioSetup, &rfParams);
@@ -128,18 +161,45 @@ static inline void mx_config_RF(void) {
     RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
 }
 
-void *mainThread(void *arg0) {
-    mx_init_drivers();
-    mx_config_UART2();
-    mx_config_RF();
 
-//    ------------ -- KEYS STUFF -- ---------------
-    mx_do_my_keys();
-//    -------------- ------------ -----------------
+// ==========================   BTNS   ===============================
+static inline void mx_config_btns(void) {
+    /* Initialize semaphores */
+    Semaphore_Params sem_param;
+    Semaphore_Params_init(&sem_param);
+    recv_btn_pressed = Semaphore_create(0, &sem_param, NULL);
+    send_btn_pressed = Semaphore_create(0, &sem_param, NULL);
 
-//    accept user input, split into msgs and send
-    mx_do_msg();
+    /* Setup callback for button pins */
+    GPIO_setConfig(CONFIG_GPIO_RECV_BTN, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);
+    GPIO_setConfig(CONFIG_GPIO_SEND_BTN, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);
 
-    return NULL;
+    GPIO_setCallback(CONFIG_GPIO_RECV_BTN, btn_callback);
+    GPIO_setCallback(CONFIG_GPIO_SEND_BTN, btn_callback);
+
+    /* Enable interrupts */
+    GPIO_enableInt(CONFIG_GPIO_RECV_BTN);
+    GPIO_enableInt(CONFIG_GPIO_SEND_BTN);
+
+    UART2_write(uart, "btn config done\n\r", sizeof("btn config done\n\r"), NULL);
+
 }
-//    -------------- ------------ -----------------
+
+static inline void btn_callback(uint_least8_t index) {
+    if (!GPIO_read(index)) {
+        switch(index) {
+            case CONFIG_GPIO_RECV_BTN:
+                UART2_write(uart, "--- RECV_BTN pressed ---\n\r", sizeof("--- RECV_BTN pressed ---\n\r"), NULL);
+                Semaphore_post(recv_btn_pressed);
+                break;
+            case CONFIG_GPIO_SEND_BTN:
+                UART2_write(uart, "--- SEND_BTN pressed ---\n\r", sizeof("--- SEND_BTN pressed ---\n\r"), NULL);
+                Semaphore_post(send_btn_pressed);
+                break;
+            default:
+                break;
+        }
+    }
+}
+// ==========================   ====   ===============================
+

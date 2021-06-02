@@ -23,8 +23,9 @@
 #include <ti/drivers/cryptoutils/ecc/ECCParams.h>
 #include <ti/drivers/cryptoutils/cryptokey/CryptoKeyPlaintext.h>
 
-//for keys
+/* BIOS Module Headers  (for keys 'n btns)*/
 #include <ti/sysbios/BIOS.h>
+//#include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Semaphore.h>
 
 
