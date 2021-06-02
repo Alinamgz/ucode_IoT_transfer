@@ -90,26 +90,26 @@ static inline void mx_config_RF(void) {
     RF_cmdPropTx.pPkt = packet;
     RF_cmdPropTx.startTrigger.triggerType = TRIG_NOW;
 //============================================================================
-//    if (RFQueue_defineQueue(&dataQueue,
-//                                rxDataEntryBuffer,
-//                                sizeof(rxDataEntryBuffer),
-//                                NUM_DATA_ENTRIES,
-//                                MAX_LENGTH + NUM_APPENDED_BYTES)) {
-//            /* Failed to allocate space for all data entries */
-//            mx_say_err("RFQueue_defineQueue");
-//        }
+    if (RFQueue_defineQueue(&dataQueue,
+                                rxDataEntryBuffer,
+                                sizeof(rxDataEntryBuffer),
+                                NUM_DATA_ENTRIES,
+                                MAX_LENGTH + NUM_APPENDED_BYTES)) {
+            /* Failed to allocate space for all data entries */
+            mx_say_err("RFQueue_defineQueue");
+        }
 
-//        /* Modify CMD_PROP_RX command for application needs */
-//        /* Set the Data Entity queue for received data */
-//        RF_cmdPropRx.pQueue = &dataQueue;
-//        /* Discard ignored packets from Rx queue */
-//        RF_cmdPropRx.rxConf.bAutoFlushIgnored = 1;
-//        /* Discard packets with CRC error from Rx queue */
-//        RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
-//        /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
-//        RF_cmdPropRx.maxPktLen = KEY_PKG_LEN;
-//        RF_cmdPropRx.pktConf.bRepeatOk = 1;
-//        RF_cmdPropRx.pktConf.bRepeatNok = 1;
+        /* Modify CMD_PROP_RX command for application needs */
+        /* Set the Data Entity queue for received data */
+        RF_cmdPropRx.pQueue = &dataQueue;
+        /* Discard ignored packets from Rx queue */
+        RF_cmdPropRx.rxConf.bAutoFlushIgnored = 1;
+        /* Discard packets with CRC error from Rx queue */
+        RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
+        /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
+        RF_cmdPropRx.maxPktLen = KEY_PKG_LEN;
+        RF_cmdPropRx.pktConf.bRepeatOk = 0;
+        RF_cmdPropRx.pktConf.bRepeatNok = 1;
 
 //============================================================================
     /* Request access to the radio */
@@ -134,7 +134,8 @@ void *mainThread(void *arg0) {
     mx_config_RF();
 
 //    ------------ -- KEYS STUFF -- ---------------
-    mx_do_keys();
+    mx_do_my_keys();
+    mx_do_peer_keys();
 //    -------------- ------------ -----------------
 
 //    accept user input, split into msgs and send

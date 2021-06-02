@@ -143,44 +143,8 @@ void *mainThread(void *arg0) {
 
     mx_config_RF();
 
-    mx_do_keys();
+    mx_do_my_keys();
 
-
-//    RF_Params rfParams;
-////    RF_Params_init(&rfParams);
-//
-//    if (RFQueue_defineQueue(&dataQueue,
-//                            rxDataEntryBuffer,
-//                            sizeof(rxDataEntryBuffer),
-//                            NUM_DATA_ENTRIES,
-//                            MAX_LENGTH + NUM_APPENDED_BYTES)) {
-//        /* Failed to allocate space for all data entries */
-//        while(1);
-//    }
-
-//    /* Modify CMD_PROP_RX command for application needs */
-//    /* Set the Data Entity queue for received data */
-//    RF_cmdPropRx.pQueue = &dataQueue;
-//    /* Discard ignored packets from Rx queue */
-//    RF_cmdPropRx.rxConf.bAutoFlushIgnored = 1;
-//    /* Discard packets with CRC error from Rx queue */
-//    RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
-//    /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
-//    RF_cmdPropRx.maxPktLen = MAX_LENGTH;
-//    RF_cmdPropRx.pktConf.bRepeatOk = 1;
-//    RF_cmdPropRx.pktConf.bRepeatNok = 1;
-//
-//    /* Request access to the radio */
-//#if defined(DeviceFamily_CC26X0R2)
-//    rfHandle = RF_open(&rfObject, &RF_prop, (RF_RadioSetup*)&RF_cmdPropRadioSetup, &rfParams);
-//#else
-//    rfHandle = RF_open(&rfObject, &RF_prop, (RF_RadioSetup*)&RF_cmdPropRadioDivSetup, &rfParams);
-//#endif// DeviceFamily_CC26X0R2
-//
-//    /* Set the frequency */
-//    RF_postCmd(rfHandle, (RF_Op*)&RF_cmdFs, RF_PriorityNormal, NULL, 0);
-
-    /* Enter RX mode and stay forever in RX */
 
     while (1) {
         terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropRx,
@@ -192,6 +156,7 @@ void *mainThread(void *arg0) {
             UART2_write(uart, "\n\rOK\n\r", 6, NULL);
             if (packet[0] == KEY_PKG) {
                 mx_handle_keypkg(packet, &peer_pub_key);
+                mx_generate_aes_key(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
             }
             // A stand-alone radio operation command or the last radio
             // operation command in a chain finished.
@@ -292,10 +257,6 @@ void *mainThread(void *arg0) {
 }
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
-
-//    char status[64];
-//    int i = 0;
-//    int_fast16_t rslt;
 
     if (e & RF_EventRxEntryDone) {
 

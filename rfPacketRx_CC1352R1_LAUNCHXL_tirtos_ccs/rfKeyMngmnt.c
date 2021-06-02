@@ -229,96 +229,96 @@ void mx_send_key(void) {
             while(1);
     }
 }
-
-void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, CryptoKey *shared_secret, CryptoKey *symetric_key) {
-    int_fast16_t rslt;
-
-    ECDH_Handle handle_ecdh;
-    ECDH_Params ecdh_params;
-    ECDH_OperationComputeSharedSecret operationComputeSharedSecret;
-
-    uint8_t buf_sha_digest[SHA2_DIGEST_LENGTH_BYTES_256];
-
-    int i = 0;
-    char status[64];
-    memset(status, 0, 64);
-
-    ECDH_init();
-
-    /* Since we are using default ECDH_Params, we just pass in NULL for that parameter. */
-    ECDH_Params_init(&ecdh_params);
-    ecdh_params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
-    handle_ecdh = ECDH_open(CONFIG_ECDH_0, &ecdh_params);
-    if (!handle_ecdh) {
-        mx_say_err("ECDH_open");
-    }
-
-
-    /* The ECC_NISTP256 struct is provided in ti/drivers/types/EccParams.h and the corresponding device-specific implementation. */
-    ECDH_OperationComputeSharedSecret_init(&operationComputeSharedSecret);
-    operationComputeSharedSecret.curve = &ECCParams_NISTP256;
-    operationComputeSharedSecret.myPrivateKey       = my_private_key;
-    operationComputeSharedSecret.theirPublicKey     = peer_pub_key;
-    operationComputeSharedSecret.sharedSecret       = shared_secret;
-
-    UART2_write(uart, "secret BEF:\n", sizeof("secret BEF:\n"), NULL);
-    for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-    UART2_write(uart, "\n\r", 2, NULL);
-
-    rslt = ECDH_computeSharedSecret(handle_ecdh, &operationComputeSharedSecret);
-
-    switch (rslt) {
-        case ECDH_STATUS_ERROR:
-            mx_say_err("ECDH_STATUS_ERROR");
-            break;
-        case ECDH_STATUS_RESOURCE_UNAVAILABLE:
-            mx_say_err("ECDH_STATUS_RESOURCE_UNAVAILABLE");
-            break;
-
-        case ECDH_STATUS_CANCELED:
-            mx_say_err("ECDH_STATUS_CANCELED");
-            break;
-
-        case ECDH_STATUS_POINT_AT_INFINITY:
-            mx_say_err("ECDH_STATUS_POINT_AT_INFINITY");
-            break;
-
-        case ECDH_STATUS_PRIVATE_KEY_ZERO:
-            mx_say_err("ECDH_STATUS_PRIVATE_KEY_ZERO");
-            break;
-        case ECDH_STATUS_SUCCESS:
-                UART2_write(uart, "secret AFT:\n", sizeof("secret AFT:\n"), NULL);
-                for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-                    memset(status, 0, sizeof(status));
-                    sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-                    UART2_write(uart, status, sizeof(status), NULL);
-                }
-                UART2_write(uart, "\n\r", 2, NULL);
-            break;
-        default:
-            memset(status, 0, sizeof(status));
-            sprintf(status, "!! status %d !!\n\r", rslt);
-            UART2_write(uart, status, sizeof(status), NULL);
-            mx_say_err("fckn ecdh");
-            break;
-    }
-
-
-    ECDH_close(handle_ecdh);
-
-    /* Hash the sharedSecret to a 256-bit buffer */
-    /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
-     * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
-    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
-
-    /* AES keys are 128-bit long, so truncate the generated hash */
-    memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);
-
-}
+//
+//void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, CryptoKey *shared_secret, CryptoKey *symetric_key) {
+//    int_fast16_t rslt;
+//
+//    ECDH_Handle handle_ecdh;
+//    ECDH_Params ecdh_params;
+//    ECDH_OperationComputeSharedSecret operationComputeSharedSecret;
+//
+//    uint8_t buf_sha_digest[SHA2_DIGEST_LENGTH_BYTES_256];
+//
+//    int i = 0;
+//    char status[64];
+//    memset(status, 0, 64);
+//
+//    ECDH_init();
+//
+//    /* Since we are using default ECDH_Params, we just pass in NULL for that parameter. */
+//    ECDH_Params_init(&ecdh_params);
+//    ecdh_params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
+//    handle_ecdh = ECDH_open(CONFIG_ECDH_0, &ecdh_params);
+//    if (!handle_ecdh) {
+//        mx_say_err("ECDH_open");
+//    }
+//
+//
+//    /* The ECC_NISTP256 struct is provided in ti/drivers/types/EccParams.h and the corresponding device-specific implementation. */
+//    ECDH_OperationComputeSharedSecret_init(&operationComputeSharedSecret);
+//    operationComputeSharedSecret.curve = &ECCParams_NISTP256;
+//    operationComputeSharedSecret.myPrivateKey       = my_private_key;
+//    operationComputeSharedSecret.theirPublicKey     = peer_pub_key;
+//    operationComputeSharedSecret.sharedSecret       = shared_secret;
+//
+//    UART2_write(uart, "secret BEF:\n", sizeof("secret BEF:\n"), NULL);
+//    for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
+//        memset(status, 0, sizeof(status));
+//        sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
+//        UART2_write(uart, status, sizeof(status), NULL);
+//    }
+//    UART2_write(uart, "\n\r", 2, NULL);
+//
+//    rslt = ECDH_computeSharedSecret(handle_ecdh, &operationComputeSharedSecret);
+//
+//    switch (rslt) {
+//        case ECDH_STATUS_ERROR:
+//            mx_say_err("ECDH_STATUS_ERROR");
+//            break;
+//        case ECDH_STATUS_RESOURCE_UNAVAILABLE:
+//            mx_say_err("ECDH_STATUS_RESOURCE_UNAVAILABLE");
+//            break;
+//
+//        case ECDH_STATUS_CANCELED:
+//            mx_say_err("ECDH_STATUS_CANCELED");
+//            break;
+//
+//        case ECDH_STATUS_POINT_AT_INFINITY:
+//            mx_say_err("ECDH_STATUS_POINT_AT_INFINITY");
+//            break;
+//
+//        case ECDH_STATUS_PRIVATE_KEY_ZERO:
+//            mx_say_err("ECDH_STATUS_PRIVATE_KEY_ZERO");
+//            break;
+//        case ECDH_STATUS_SUCCESS:
+//                UART2_write(uart, "secret AFT:\n", sizeof("secret AFT:\n"), NULL);
+//                for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
+//                    memset(status, 0, sizeof(status));
+//                    sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
+//                    UART2_write(uart, status, sizeof(status), NULL);
+//                }
+//                UART2_write(uart, "\n\r", 2, NULL);
+//            break;
+//        default:
+//            memset(status, 0, sizeof(status));
+//            sprintf(status, "!! status %d !!\n\r", rslt);
+//            UART2_write(uart, status, sizeof(status), NULL);
+//            mx_say_err("fckn ecdh");
+//            break;
+//    }
+//
+//
+//    ECDH_close(handle_ecdh);
+//
+//    /* Hash the sharedSecret to a 256-bit buffer */
+//    /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
+//     * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
+//    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
+//
+//    /* AES keys are 128-bit long, so truncate the generated hash */
+//    memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);
+//
+//}
 
 //===============================================================================================================
 
@@ -444,30 +444,102 @@ UART2_write(uart, "ECDSA_OperationVerify_init done\n\r", sizeof("ECDSA_Operation
 
 //===============================================================================================================
 
-void mx_do_keys(void) {
-    uint8_t private_key_material[PRIVATE_KEY_LEN];
-    uint8_t public_key_material[PUBLIC_KEY_LEN];
+void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, CryptoKey *shared_secret, CryptoKey *symetric_key) {
+    int_fast16_t rslt;
 
-    uint8_t peer_priv_key_material[PRIVATE_KEY_LEN] = {0};
-//    uint8_t peer_pub_key_material[PUBLIC_KEY_LEN] = {0};
+    ECDH_Handle handle_ecdh;
+    ECDH_Params ecdh_params;
+    ECDH_OperationComputeSharedSecret operationComputeSharedSecret;
 
-    uint8_t shared_secret_material[PUBLIC_KEY_LEN];
-    uint8_t symmetric_key_material[AES_KEY_LEN] = {0};
+    uint8_t buf_sha_digest[SHA2_DIGEST_LENGTH_BYTES_256];
 
-    CryptoKey private_key;
-    CryptoKey public_key;
+    int i = 0;
+    char status[64];
+    memset(status, 0, 64);
 
-    CryptoKey peer_priv_key;
-//    CryptoKey peer_pub_key;
+    /* Since we are using default ECDH_Params, we just pass in NULL for that parameter. */
+    ECDH_Params_init(&ecdh_params);
+    ecdh_params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
+    handle_ecdh = ECDH_open(CONFIG_ECDH_0, &ecdh_params);
+    if (!handle_ecdh) {
+        mx_say_err("ECDH_open");
+    }
 
-    CryptoKey shared_secret;
-    CryptoKey symmetric_key;
+
+    /* The ECC_NISTP256 struct is provided in ti/drivers/types/EccParams.h and the corresponding device-specific implementation. */
+    ECDH_OperationComputeSharedSecret_init(&operationComputeSharedSecret);
+    operationComputeSharedSecret.curve = &ECCParams_NISTP256;
+    operationComputeSharedSecret.myPrivateKey       = my_private_key;
+    operationComputeSharedSecret.theirPublicKey     = peer_pub_key;
+    operationComputeSharedSecret.sharedSecret       = shared_secret;
+
+    UART2_write(uart, "secret BEF:\n", sizeof("secret BEF:\n"), NULL);
+    for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
+        memset(status, 0, sizeof(status));
+        sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
+        UART2_write(uart, status, sizeof(status), NULL);
+    }
+    UART2_write(uart, "\n\r", 2, NULL);
+
+    rslt = ECDH_computeSharedSecret(handle_ecdh, &operationComputeSharedSecret);
+
+    switch (rslt) {
+        case ECDH_STATUS_ERROR:
+            mx_say_err("ECDH_STATUS_ERROR");
+            break;
+        case ECDH_STATUS_RESOURCE_UNAVAILABLE:
+            mx_say_err("ECDH_STATUS_RESOURCE_UNAVAILABLE");
+            break;
+
+        case ECDH_STATUS_CANCELED:
+            mx_say_err("ECDH_STATUS_CANCELED");
+            break;
+
+        case ECDH_STATUS_POINT_AT_INFINITY:
+            mx_say_err("ECDH_STATUS_POINT_AT_INFINITY");
+            break;
+
+        case ECDH_STATUS_PRIVATE_KEY_ZERO:
+            mx_say_err("ECDH_STATUS_PRIVATE_KEY_ZERO");
+            break;
+        case ECDH_STATUS_SUCCESS:
+                UART2_write(uart, "secret AFT:\n", sizeof("secret AFT:\n"), NULL);
+                for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
+                    memset(status, 0, sizeof(status));
+                    sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
+                    UART2_write(uart, status, sizeof(status), NULL);
+                }
+                UART2_write(uart, "\n\r", 2, NULL);
+            break;
+        default:
+            memset(status, 0, sizeof(status));
+            sprintf(status, "!! status %d !!\n\r", rslt);
+            UART2_write(uart, status, sizeof(status), NULL);
+            mx_say_err("fckn ecdh");
+            break;
+    }
+
+
+    ECDH_close(handle_ecdh);
+
+    /* Hash the sharedSecret to a 256-bit buffer */
+    /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
+     * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
+    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
+
+    /* AES keys are 128-bit long, so truncate the generated hash */
+    memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);
+
+}
+
+//===============================================================================================================
+
+//===============================================================================================================
+
+void mx_do_my_keys(void) {
 
     CryptoKeyPlaintext_initBlankKey(&private_key, private_key_material, PRIVATE_KEY_LEN);
     CryptoKeyPlaintext_initBlankKey(&public_key, public_key_material, PUBLIC_KEY_LEN);
-
-    CryptoKeyPlaintext_initBlankKey(&peer_priv_key, peer_priv_key_material, PRIVATE_KEY_LEN);
-//    CryptoKeyPlaintext_initBlankKey(&peer_pub_key, peer_pub_key_material, PUBLIC_KEY_LEN);
 
     CryptoKeyPlaintext_initBlankKey(&shared_secret, shared_secret_material, PUBLIC_KEY_LEN);
     CryptoKeyPlaintext_initBlankKey(&symmetric_key, symmetric_key_material, AES_KEY_LEN);

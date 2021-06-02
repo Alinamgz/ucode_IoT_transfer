@@ -18,9 +18,6 @@ inline void do_sha (uint8_t* src, uint32_t src_len, uint8_t *rslt_buf, uint8_t c
     SHA2_Handle handle_sha2;
     int_fast16_t rslt;
 
-    char status[4];
-    int i = 0;
-
     /* Hash the sharedSecret to a 256-bit buffer */
     handle_sha2 = SHA2_open(CONFIG_SHA2_0, NULL);
     if (!handle_sha2) {
@@ -356,30 +353,10 @@ void mx_check_keys(CryptoKey *private_key, CryptoKey *public_key, CryptoKey *pee
 
 //===============================================================================================================
 
-void mx_do_keys(void) {
-    uint8_t private_key_material[PRIVATE_KEY_LEN];
-    uint8_t public_key_material[PUBLIC_KEY_LEN];
-
-    uint8_t peer_priv_key_material[PRIVATE_KEY_LEN] = {0};
-    uint8_t peer_pub_key_material[PUBLIC_KEY_LEN] = {0};
-
-    uint8_t shared_secret_material[PUBLIC_KEY_LEN];
-    uint8_t symmetric_key_material[AES_KEY_LEN] = {0};
-
-    CryptoKey private_key;
-    CryptoKey public_key;
-
-    CryptoKey peer_priv_key;
-    CryptoKey peer_pub_key;
-
-    CryptoKey shared_secret;
-    CryptoKey symmetric_key;
+void mx_do_my_keys(void) {
 
     CryptoKeyPlaintext_initBlankKey(&private_key, private_key_material, PRIVATE_KEY_LEN);
     CryptoKeyPlaintext_initBlankKey(&public_key, public_key_material, PUBLIC_KEY_LEN);
-
-    CryptoKeyPlaintext_initBlankKey(&peer_priv_key, peer_priv_key_material, PRIVATE_KEY_LEN);
-    CryptoKeyPlaintext_initBlankKey(&peer_pub_key, peer_pub_key_material, PUBLIC_KEY_LEN);
 
     CryptoKeyPlaintext_initBlankKey(&shared_secret, shared_secret_material, PUBLIC_KEY_LEN);
     CryptoKeyPlaintext_initBlankKey(&symmetric_key, symmetric_key_material, AES_KEY_LEN);
@@ -397,7 +374,6 @@ void mx_do_keys(void) {
 
     //   ========================  ===========================  ===========================
 
-//        COM_generateAesKey(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
 //        mx_generate_aes_key(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
 
 //UART2_write(uart, "now have to send key pkg \n\r", sizeof("now have to send key pkg \n\r"), NULL);

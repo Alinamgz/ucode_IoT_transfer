@@ -1,5 +1,25 @@
 #pragma once
 
+
+// Keys
+uint8_t private_key_material[PRIVATE_KEY_LEN];
+uint8_t public_key_material[PUBLIC_KEY_LEN];
+
+//uint8_t peer_priv_key_material[PRIVATE_KEY_LEN];
+uint8_t peer_pub_key_material[PUBLIC_KEY_LEN];
+
+uint8_t shared_secret_material[PUBLIC_KEY_LEN];
+uint8_t symmetric_key_material[AES_KEY_LEN];
+//==================================================
+CryptoKey private_key;
+CryptoKey public_key;
+
+CryptoKey peer_priv_key;
+CryptoKey peer_pub_key;
+
+CryptoKey shared_secret;
+CryptoKey symmetric_key;
+
 /***** Variable declarations *****/
 //RADIO
 RF_Handle rfHandle;
