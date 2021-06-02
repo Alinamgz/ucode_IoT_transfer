@@ -1,24 +1,22 @@
 #pragma once
 
-
-// Keys
+//  ============== KEY ============
 uint8_t private_key_material[PRIVATE_KEY_LEN];
 uint8_t public_key_material[PUBLIC_KEY_LEN];
 
-//uint8_t peer_priv_key_material[PRIVATE_KEY_LEN];
 uint8_t peer_pub_key_material[PUBLIC_KEY_LEN];
 
 uint8_t shared_secret_material[PUBLIC_KEY_LEN];
 uint8_t symmetric_key_material[AES_KEY_LEN];
-//==================================================
+// -----------------------------------
 CryptoKey private_key;
 CryptoKey public_key;
 
-CryptoKey peer_priv_key;
 CryptoKey peer_pub_key;
 
 CryptoKey shared_secret;
 CryptoKey symmetric_key;
+// ======================================
 
 /***** Variable declarations *****/
 //RADIO
@@ -56,7 +54,7 @@ uint32_t cmdStatus;
 //#if defined(__TI_COMPILER_VERSION__)
 //#pragma DATA_ALIGN (rxDataEntryBuffer, 4);
 //static uint8_t
-//rxDataEntryBuffer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
+//rxDataEntryBufer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
 //                                                  MAX_LENGTH,
 //                                                  NUM_APPENDED_BYTES)];
 //#elif defined(__IAR_SYSTEMS_ICC__)

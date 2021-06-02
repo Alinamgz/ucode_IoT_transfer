@@ -34,4 +34,7 @@
 
 /* Board Header files */
 #include "ti_drivers_config.h"
+
+/* Application Header files */
+#include "RFQueue.h"
 #include <ti_radio_config.h>
