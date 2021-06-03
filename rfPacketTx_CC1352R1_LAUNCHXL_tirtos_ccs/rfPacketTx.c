@@ -70,13 +70,15 @@ void *mainThread(void *arg0) {
 
 //    ------------ -- KEYS STUFF -- ---------------
     mx_do_my_keys();
-
-    /* Wait for button0 pressed before proceeding */
-    Semaphore_pend(send_btn_pressed, BIOS_WAIT_FOREVER);
+    mx_recv_n_proceed_peer_key();
     mx_share_my_pub_key();
 
-    Semaphore_pend(recv_btn_pressed, BIOS_WAIT_FOREVER);
-    mx_recv_n_proceed_peer_key();
+    /* Wait for button0 pressed before proceeding */
+//    Semaphore_pend(send_btn_pressed, BIOS_WAIT_FOREVER);
+//    mx_share_my_pub_key();
+
+//    Semaphore_pend(recv_btn_pressed, BIOS_WAIT_FOREVER);
+//    mx_recv_n_proceed_peer_key();
 
 
 //    -------------- ------------ -----------------

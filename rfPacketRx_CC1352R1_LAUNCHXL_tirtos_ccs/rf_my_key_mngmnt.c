@@ -13,11 +13,10 @@
 #include "rx_functions.h"
 
 
+
 inline void do_sha (uint8_t* src, uint32_t src_len, uint8_t *rslt_buf, uint8_t chck) {
     SHA2_Handle handle_sha2;
     int_fast16_t rslt;
-    char status[4];
-    int i = 0;
 
     /* Hash the sharedSecret to a 256-bit buffer */
     handle_sha2 = SHA2_open(CONFIG_SHA2_0, NULL);
@@ -34,28 +33,6 @@ inline void do_sha (uint8_t* src, uint32_t src_len, uint8_t *rslt_buf, uint8_t c
         mx_say_err("SHA2_hashData @ aes_key");
     }
 
-    if (chck) {
-
-        UART2_write(uart, "======================================\n\r\n", sizeof("======================================\n\r\n"), NULL);
-
-        UART2_write(uart, "CHECK input\n", sizeof("CHECK input\n"), NULL);
-        for (i = 0; i < src_len; i++) {
-            memset(status, 0, sizeof(status));
-            sprintf(status, " %d", src[i]);
-            UART2_write(uart, status, sizeof(status), NULL);
-        }
-        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-
-        UART2_write(uart, "CHECK output\n", sizeof("CHECK output\n"), NULL);
-        for (i = 0; i < PRIVATE_KEY_LEN; i++) {
-            memset(status, 0, sizeof(status));
-            sprintf(status, " %d", rslt_buf[i]);
-            UART2_write(uart, status, sizeof(status), NULL);
-        }
-        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-        UART2_write(uart, "======================================\n\r\n", sizeof("======================================\n\r\n"), NULL);
-    }
-
     SHA2_close(handle_sha2);
 }
 
@@ -69,7 +46,7 @@ void mx_generate_random_bytes(CryptoKey *entropy_key) {
 //    int i = 0;
 
     /*    call driver init funtion */
-    TRNG_init();
+
 
 /*    open a TRNG_Handle with the provided buffer */
     handle = TRNG_open(CONFIG_TRNG_0, NULL);
@@ -105,7 +82,6 @@ void mx_generate_public_key(CryptoKey *private_key, CryptoKey *public_key) {
 
     mx_generate_random_bytes(private_key);
 
-    ECDH_init();
     ECDH_Params_init(&params);
     params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
     handle = ECDH_open(CONFIG_ECDH_0, &params);
@@ -138,11 +114,11 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
 
     uint8_t hashed_data_buf[PRIVATE_KEY_LEN];
 
+    uint8_t chck[] = LOREM_IPSUM;
+
     char check_msg[5];
     int i;
 
-    SHA2_init();
-    ECDSA_init();
 
 //load pkg metadata n' publick key to pkg
     memset(key_pkg, 0, sizeof(key_pkg));
@@ -150,9 +126,23 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
 //    key_pkg[PKG_LEN_BYTE] = KEY_PKG_LEN;
     memcpy(&key_pkg[HEADER_LEN], public_key->u.plaintext.keyMaterial, public_key->u.plaintext.keyLength);
 
-/* Perform SHA-2 computation on the data to be signed */
-    do_sha(key_pkg, HEADER_LEN + PRIVATE_KEY_LEN, hashed_data_buf, 0);
+    //================================== Check hash ========================================================
+        do_sha(chck, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
 
+        UART2_write(uart, "CHECK HASH\n", sizeof("CHECK HASH\n"), NULL);
+        for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
+            memset(check_msg, 0, sizeof(check_msg));
+            sprintf(check_msg, " %d", hashed_data_buf[i]);
+            UART2_write(uart, check_msg, sizeof(check_msg), NULL);
+        }
+        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+    //===================================            =======================================================
+
+/* Perform SHA-2 computation on the data to be signed */
+
+
+        memset(hashed_data_buf, 0, sizeof(hashed_data_buf));
+    do_sha(key_pkg, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
 
 UART2_write(uart, "PUB KEY GEN hash\n", sizeof("PUB KEY GEN hash\n"), NULL);
     for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
@@ -188,14 +178,23 @@ UART2_write(uart, "PUB KEY GEN hash\n", sizeof("PUB KEY GEN hash\n"), NULL);
 //===============================================================================================================
 
 void mx_send_key(void) {
-    UART2_write(uart, "ama tuta\n\r", sizeof("ama tuta\n\r"), NULL);
 
+//    memset(&packet[1], 'j', 130);
     terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
-    UART2_write(uart, "ama tuta\n\r", sizeof("ama tuta\n\r"), NULL);
+    int i = 0;
+    char status[4];
 
     switch(terminationReason) {
         case RF_EventLastCmdDone:
-    UART2_write(uart, "Sending key pkg done\n\r", sizeof("Sending key pkg done\n\r"), NULL);
+    UART2_write(uart, "Sending key pkg done. SENT:\n\r", sizeof("Sending key pkg done SENT:\n\r"), NULL);
+    UART2_write(uart, packet, sizeof(packet), NULL);
+    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+            for (i = 0; i < MAX_LENGTH; i++) {
+                memset(status, 0, sizeof(status));
+                sprintf(status, " %d", RF_cmdPropTx.pPkt[i]);
+                UART2_write(uart, status, sizeof(status), NULL);
+            }
+
             GPIO_toggle(CONFIG_GPIO_LED_GREEN);
             GPIO_toggle(CONFIG_GPIO_LED_RED);
 
@@ -229,218 +228,7 @@ void mx_send_key(void) {
             while(1);
     }
 }
-//
-//void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, CryptoKey *shared_secret, CryptoKey *symetric_key) {
-//    int_fast16_t rslt;
-//
-//    ECDH_Handle handle_ecdh;
-//    ECDH_Params ecdh_params;
-//    ECDH_OperationComputeSharedSecret operationComputeSharedSecret;
-//
-//    uint8_t buf_sha_digest[SHA2_DIGEST_LENGTH_BYTES_256];
-//
-//    int i = 0;
-//    char status[64];
-//    memset(status, 0, 64);
-//
-//    ECDH_init();
-//
-//    /* Since we are using default ECDH_Params, we just pass in NULL for that parameter. */
-//    ECDH_Params_init(&ecdh_params);
-//    ecdh_params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
-//    handle_ecdh = ECDH_open(CONFIG_ECDH_0, &ecdh_params);
-//    if (!handle_ecdh) {
-//        mx_say_err("ECDH_open");
-//    }
-//
-//
-//    /* The ECC_NISTP256 struct is provided in ti/drivers/types/EccParams.h and the corresponding device-specific implementation. */
-//    ECDH_OperationComputeSharedSecret_init(&operationComputeSharedSecret);
-//    operationComputeSharedSecret.curve = &ECCParams_NISTP256;
-//    operationComputeSharedSecret.myPrivateKey       = my_private_key;
-//    operationComputeSharedSecret.theirPublicKey     = peer_pub_key;
-//    operationComputeSharedSecret.sharedSecret       = shared_secret;
-//
-//    UART2_write(uart, "secret BEF:\n", sizeof("secret BEF:\n"), NULL);
-//    for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-//        memset(status, 0, sizeof(status));
-//        sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-//        UART2_write(uart, status, sizeof(status), NULL);
-//    }
-//    UART2_write(uart, "\n\r", 2, NULL);
-//
-//    rslt = ECDH_computeSharedSecret(handle_ecdh, &operationComputeSharedSecret);
-//
-//    switch (rslt) {
-//        case ECDH_STATUS_ERROR:
-//            mx_say_err("ECDH_STATUS_ERROR");
-//            break;
-//        case ECDH_STATUS_RESOURCE_UNAVAILABLE:
-//            mx_say_err("ECDH_STATUS_RESOURCE_UNAVAILABLE");
-//            break;
-//
-//        case ECDH_STATUS_CANCELED:
-//            mx_say_err("ECDH_STATUS_CANCELED");
-//            break;
-//
-//        case ECDH_STATUS_POINT_AT_INFINITY:
-//            mx_say_err("ECDH_STATUS_POINT_AT_INFINITY");
-//            break;
-//
-//        case ECDH_STATUS_PRIVATE_KEY_ZERO:
-//            mx_say_err("ECDH_STATUS_PRIVATE_KEY_ZERO");
-//            break;
-//        case ECDH_STATUS_SUCCESS:
-//                UART2_write(uart, "secret AFT:\n", sizeof("secret AFT:\n"), NULL);
-//                for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-//                    memset(status, 0, sizeof(status));
-//                    sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-//                    UART2_write(uart, status, sizeof(status), NULL);
-//                }
-//                UART2_write(uart, "\n\r", 2, NULL);
-//            break;
-//        default:
-//            memset(status, 0, sizeof(status));
-//            sprintf(status, "!! status %d !!\n\r", rslt);
-//            UART2_write(uart, status, sizeof(status), NULL);
-//            mx_say_err("fckn ecdh");
-//            break;
-//    }
-//
-//
-//    ECDH_close(handle_ecdh);
-//
-//    /* Hash the sharedSecret to a 256-bit buffer */
-//    /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
-//     * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
-//    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
-//
-//    /* AES keys are 128-bit long, so truncate the generated hash */
-//    memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);
-//
-//}
 
-//===============================================================================================================
-
-
-void mx_check_keys(CryptoKey *private_key, CryptoKey *public_key, CryptoKey *peer_pub_key) {
-    int i = 0;
-    char check_msg[32];
-
-    UART2_write(uart, "PRIVATE:\n", sizeof("PRIVATE:\n"), NULL);
-    for (i  = 0; i < PRIVATE_KEY_LEN; i++) {
-        memset(check_msg, 0, sizeof(check_msg));
-        sprintf(check_msg, " %d", private_key->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
-    }
-
-    UART2_write(uart, "\n\r PUBLIC:\n", sizeof("\n\r PUBLIC:\n"), NULL);
-    for (i  = 0; i < PUBLIC_KEY_LEN; i++) {
-        memset(check_msg, 0, sizeof(check_msg));
-        sprintf(check_msg, " %d", public_key->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
-    }
-
-    UART2_write(uart, "\n\r   PEER:\n", sizeof("\n\r   PEER:\n"), NULL);
-    for (i  = 0; i < PUBLIC_KEY_LEN; i++) {
-        memset(check_msg, 0, sizeof(check_msg));
-        sprintf(check_msg, " %d", peer_pub_key->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
-    }
-
-    UART2_write(uart, "\n\r----- ----- -----\n\r", sizeof("\n\r----- ----- -----\n\r"), NULL);
-}
-
-//===============================================================================================================
-
-void mx_handle_keypkg(uint8_t *packet, CryptoKey *peer_pub_key) {
-    ECDSA_Handle handle_verify;
-    ECDSA_OperationVerify operation_verify;
-
-    int_fast16_t rslt;
-    uint8_t hash_buf[PRIVATE_KEY_LEN];
-//
-    int i = 0;
-    char status[4];
-    uint8_t chck[] = LOREM_IPSUM;
-
-    UART2_write(uart, "Sending key pkg done. RECV:\n\r", sizeof("Sending key pkg done RECV:\n\r"), NULL);
-    UART2_write(uart, packet, MAX_LENGTH, NULL);
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-    for (i = 0; i < MAX_LENGTH; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", packet[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-    /* Copy the public keys from the packet into the parameters */
-    memcpy(peer_pub_key_material, &packet[HEADER_LEN], PUBLIC_KEY_LEN);
-    CryptoKeyPlaintext_initKey(peer_pub_key, peer_pub_key_material, PUBLIC_KEY_LEN);
-
-    UART2_write(uart, "\n\rPEER PUB KEY\n\r", sizeof("\n\rPEER PUB KEY\n\r"), NULL);
-    for (i = 0; i < peer_pub_key->u.plaintext.keyLength; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", peer_pub_key->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-
-//================================== Check hash ========================================================
-    do_sha(chck, HEADER_LEN + PUBLIC_KEY_LEN, hash_buf, 1);
-
-    UART2_write(uart, "CHECK HASH\n", sizeof("CHECK HASH\n"), NULL);
-    for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", hash_buf[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-//===================================            =======================================================
-
-
-    /* Hash the header and public key component of the message. Pass NULL to use the default parameters */
-    memset(hash_buf, 0, sizeof(hash_buf));
-    do_sha(packet, HEADER_LEN + PUBLIC_KEY_LEN, hash_buf, 1);
-
-    UART2_write(uart, "PEER PUB KEY HASH\n", sizeof("PEER PUB KEY HASH\n"), NULL);
-    for (i = 0; i < SHA2_DIGEST_LENGTH_BYTES_256; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", hash_buf[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-
-UART2_write(uart, "\n\rsha done\n\r", sizeof("\n\rsha done\n\r"), NULL);
-
-    /* Verify signature of public key */
-    ECDSA_OperationVerify_init(&operation_verify);
-    operation_verify.curve = &ECCParams_NISTP256;
-    operation_verify.theirPublicKey = peer_pub_key;
-    operation_verify.hash = hash_buf;
-    operation_verify.r = &packet[HEADER_LEN + PUBLIC_KEY_LEN];
-    operation_verify.s = &packet[HEADER_LEN + PUBLIC_KEY_LEN + PRIVATE_KEY_LEN];
-
-UART2_write(uart, "ECDSA_OperationVerify_init done\n\r", sizeof("ECDSA_OperationVerify_init done\n\r"), NULL);
-    /* Pass NULL to use the default parameters */
-    handle_verify = ECDSA_open(CONFIG_ECDSA_0, NULL);
-    if (!handle_verify) {
-        mx_say_err("ECDSA_open @verification");
-    }
-
-
-    rslt = ECDSA_verify(handle_verify, &operation_verify);
-    if (rslt != ECDSA_STATUS_SUCCESS) {
-        char chck[32];
-        memset(chck, 0, sizeof(chck));
-        sprintf(chck, "ECDSA_verify code %d", rslt);
-
-        mx_say_err(chck);
-    }
-
-    ECDSA_close(handle_verify);
-    UART2_write(uart, "pub key pkg verification kinda done\n\r", sizeof("pub key pkg verification kinda done\n\r"), NULL);
-}
 
 //===============================================================================================================
 
@@ -534,6 +322,35 @@ void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, Cry
 
 //===============================================================================================================
 
+
+void mx_check_keys(CryptoKey *private_key, CryptoKey *public_key, CryptoKey *peer_pub_key) {
+    int i = 0;
+    char check_msg[32];
+
+    UART2_write(uart, "PRIVATE:\n", sizeof("PRIVATE:\n"), NULL);
+    for (i  = 0; i < PRIVATE_KEY_LEN; i++) {
+        memset(check_msg, 0, sizeof(check_msg));
+        sprintf(check_msg, " %d", private_key->u.plaintext.keyMaterial[i]);
+        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
+    }
+
+    UART2_write(uart, "\n\r PUBLIC:\n", sizeof("\n\r PUBLIC:\n"), NULL);
+    for (i  = 0; i < PUBLIC_KEY_LEN; i++) {
+        memset(check_msg, 0, sizeof(check_msg));
+        sprintf(check_msg, " %d", public_key->u.plaintext.keyMaterial[i]);
+        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
+    }
+
+    UART2_write(uart, "\n\r   PEER:\n", sizeof("\n\r   PEER:\n"), NULL);
+    for (i  = 0; i < PUBLIC_KEY_LEN; i++) {
+        memset(check_msg, 0, sizeof(check_msg));
+        sprintf(check_msg, " %d", peer_pub_key->u.plaintext.keyMaterial[i]);
+        UART2_write(uart, check_msg, sizeof(check_msg), NULL);
+    }
+
+    UART2_write(uart, "\n\r----- ----- -----\n\r", sizeof("\n\r----- ----- -----\n\r"), NULL);
+}
+
 //===============================================================================================================
 
 void mx_do_my_keys(void) {
@@ -547,7 +364,7 @@ void mx_do_my_keys(void) {
     mx_generate_random_bytes(&private_key);
     mx_generate_public_key(&private_key, &public_key);
 
-    mx_check_keys(&private_key, &public_key, &peer_pub_key);
+//    mx_check_keys(&private_key, &public_key, &peer_pub_key);
 //    mx_create_publick_key_pkg(packet, &private_key, &public_key);
 
 
@@ -557,7 +374,6 @@ void mx_do_my_keys(void) {
 
     //   ========================  ===========================  ===========================
 
-//        COM_generateAesKey(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
 //        mx_generate_aes_key(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
 
 //UART2_write(uart, "now have to send key pkg \n\r", sizeof("now have to send key pkg \n\r"), NULL);

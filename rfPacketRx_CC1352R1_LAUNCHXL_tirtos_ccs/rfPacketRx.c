@@ -144,6 +144,8 @@ void *mainThread(void *arg0) {
     mx_config_RF();
 
     mx_do_my_keys();
+    mx_share_my_pub_key();
+//    mx_recv_n_proceed_peer_key();
 
 
     while (1) {

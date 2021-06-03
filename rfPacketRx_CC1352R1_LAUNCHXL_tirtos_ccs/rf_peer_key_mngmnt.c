@@ -1,19 +1,19 @@
 /***** Includes *****/
 /* Standard C Libraries */
-#include "tx_includes.h"
+#include "rx_includes.h"
 
 /***** Defines *****/
-#include "tx_defines.h"
+#include "rx_defines.h"
 
 /***** Prototypes *****/
-#include "tx_glob_vars.h"
+#include "rx_glob_vars.h"
 
 /***** Function definitions *****/
-#include "tx_functions.h"
+#include "rx_functions.h"
 
 /***** Prototypes *****/
 static void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
-static void mx_handle_keypkg(uint8_t *packet, CryptoKey *peer_pub_key);
+//static void mx_handle_keypkg(uint8_t *packet, CryptoKey *peer_pub_key);
 static void mx_generate_aes_key(CryptoKey *my_private_key,
 								CryptoKey *peer_pub_key,
 								CryptoKey *shared_secret,
@@ -39,8 +39,8 @@ void mx_recv_n_proceed_peer_key(void) {
 							&shared_secret,
 							&symmetric_key);
 		//  ---------- ?????? ------------------
-		mx_share_my_pubkey()
-		mx_do_msg();
+//		mx_share_my_pubkey()
+//		mx_do_msg();
 	}
 	else {
 		mx_say_err("peer key recv n proceed");
