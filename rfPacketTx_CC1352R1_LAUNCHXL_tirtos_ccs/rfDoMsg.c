@@ -10,34 +10,41 @@
 
 /***** Function definitions *****/
 #include "tx_functions.h"
+static void mx_read_input(char *msg_buf, uint8_t buf_size);
+static void mx_create_encrypted_pkg(char *msg_buf, uint8_t *packet, CryptoKey *symmetric_key);
 
 void mx_do_msg(void) {
-    char msg_buf[MAX_LENGTH - HEADER_LEN];
-    uint8_t i = 0;
+    char msg_buf[MAX_LENGTH - HEADER_LEN - NONCE_LEN];
+//    uint8_t i = 0;
+//
+//    while(1) {
+//           memset(msg_buf, 0, sizeof(msg_buf));
+//           memset(packet, 0, sizeof(packet));
+//
+//           for (i = 0; i < sizeof(msg_buf); i++) {
+//               UART2_read(uart, &msg_buf[i], 1, NULL);
+//               UART2_write(uart, &msg_buf[i], 1, NULL);
+//
+//               if (msg_buf[i] == '\r') {
+//                   UART2_write(uart, "\n", 1, NULL);
+//                   if (strcmp(msg_buf, "lorem\r") == 0) {
+//                       memcpy(msg_buf, LOREM_IPSUM, sizeof(msg_buf));
+//                   }
+//                   break;
+//               }
+//           }
+while(1) {
+           mx_read_input(msg_buf, sizeof(msg_buf));
+                      UART2_write(uart, "encryption started \n\r", sizeof("encryption started \n\r"), NULL);
+           mx_create_encrypted_pkg(msg_buf, packet, &symmetric_key);
+                      UART2_write(uart, "encryption done. \n\r", sizeof("encryption done. \n\r"), NULL);
 
-    while(1) {
-           memset(msg_buf, 0, sizeof(msg_buf));
-           memset(packet, 0, sizeof(packet));
-
-           for (i = 0; i < sizeof(msg_buf); i++) {
-               UART2_read(uart, &msg_buf[i], 1, NULL);
-               UART2_write(uart, &msg_buf[i], 1, NULL);
-
-               if (msg_buf[i] == '\r') {
-                   UART2_write(uart, "\n", 1, NULL);
-                   if (strcmp(msg_buf, "lorem\r") == 0) {
-                       memcpy(msg_buf, LOREM_IPSUM, sizeof(msg_buf));
-                   }
-                   break;
-               }
-           }
-
-
-           memset(packet, 0, sizeof(packet));
-           packet[PKG_ID_BYTE] = MSG_PKG;
-
-           memcpy(&packet[HEADER_LEN], msg_buf, sizeof(msg_buf));
+//           memset(packet, 0, sizeof(packet));
+//           packet[PKG_ID_BYTE] = MSG_PKG;
+//
+//           memcpy(&packet[HEADER_LEN], msg_buf, sizeof(msg_buf));
            terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
+                      UART2_write(uart, "kinda sent. \n\r", sizeof("kinda sent. \n\r"), NULL);
 
 //
            switch(terminationReason) {
@@ -124,5 +131,75 @@ void mx_do_msg(void) {
            usleep(PACKET_INTERVAL);
    #endif
 
-       }
+}
+}
+
+static void mx_read_input(char *msg_buf, uint8_t buf_size) {
+//    char msg_buf[MAX_LENGTH - HEADER_LEN];
+    uint8_t i = 0;
+
+//    while(1) {
+        memset(msg_buf, 0, buf_size);
+//        memset(packet, 0, sizeof(packet));
+
+        for (i = 0; i < buf_size; i++) {
+            UART2_read(uart, &msg_buf[i], 1, NULL);
+            UART2_write(uart, &msg_buf[i], 1, NULL);
+
+            if (msg_buf[i] == '\r') {
+                UART2_write(uart, "\n", 1, NULL);
+                if (strcmp(msg_buf, "lorem\r") == 0) {
+                   memcpy(msg_buf, LOREM_IPSUM, buf_size);
+                }
+                break;
+            }
+        }
+//    }
+}
+
+static void mx_create_encrypted_pkg(char *msg_buf, uint8_t *packet, CryptoKey *symmetric_key) {
+    AESCCM_Handle handle_aesccm;
+    AESCCM_Operation operation_aesccm;
+    int_fast16_t rslt;
+
+    /* Header contains packet type !(and length. In this case length is fixed by packet type
+    * but in a real application it may vary message to message.) */
+    memset(packet, 0, sizeof(packet));
+    packet[PKG_ID_BYTE] = MSG_PKG;
+
+//    ====================
+//    ???    something abt nonce    ???
+//    ====================
+
+    handle_aesccm = AESCCM_open(CONFIG_AESCCM_0, NULL);
+    if (!handle_aesccm) {
+        mx_say_err("AESCCM_open");
+    }
+
+    /* Initialize encryption transaction */
+    AESCCM_Operation_init(&operation_aesccm);
+    operation_aesccm.key = symmetric_key;
+
+    operation_aesccm.aad = packet;
+    operation_aesccm.aadLength = HEADER_LEN;
+
+    operation_aesccm.nonceInternallyGenerated = 1;
+    operation_aesccm.nonce = &packet[HEADER_LEN];
+    operation_aesccm.nonceLength = NONCE_LEN;
+
+    operation_aesccm.input = (uint8_t*)msg_buf;
+    operation_aesccm.inputLength = MSG_LEN;
+
+    operation_aesccm.output = &packet[HEADER_LEN + NONCE_LEN];
+
+    operation_aesccm.mac = &packet[HEADER_LEN + NONCE_LEN + MSG_LEN];
+    operation_aesccm.macLength = MAC_LEN;
+
+    /* Execute the encryption transaction */
+    rslt = AESCCM_oneStepEncrypt(handle_aesccm, &operation_aesccm);
+    if(rslt != AESCCM_STATUS_SUCCESS) {
+        mx_say_err("AESCCM_oneStepEncrypt");
+    }
+
+    AESCCM_close(handle_aesccm);
 }

@@ -7,3 +7,4 @@ void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, Cry
 
 void mx_recv_n_proceed_peer_key(void);
 void mx_share_my_pub_key(void);
+//void decrypt_packet(uint8_t *rxPacket, CryptoKey *symmetricKey);
