@@ -49,18 +49,6 @@ static inline void mx_config_RF(void);
 static inline void btn_callback(uint_least8_t index);
 static inline void mx_config_btns(void);
 
-inline void mx_say_err(char *where_err) {
-    char err_msg[64];
-
-    memset(err_msg, 0, 64);
-    sprintf(err_msg, "\n\r!!! %s ERR !!!\n\r", where_err);
-
-    UART2_write(uart, err_msg, sizeof(err_msg), NULL);
-    while (1) {
-        GPIO_toggle(CONFIG_GPIO_LED_RED);
-        usleep(250000);
-    }
-}
 
 void *mainThread(void *arg0) {
     mx_init_drivers();
@@ -83,7 +71,7 @@ void *mainThread(void *arg0) {
 
 //    -------------- ------------ -----------------
 
-//    accept user input, split into msgs and send
+//    get user input, split into msgs and send
     mx_do_msg();
 
     return NULL;
@@ -103,6 +91,7 @@ static inline void mx_init_drivers(void) {
 static inline void mx_config_UART2(void) {
     UART2_Params_init(&uart_params);
     uart_params.baudRate = 115200;
+
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
         UART2_write(uart, WELCOME_MSG, sizeof(WELCOME_MSG), NULL);
@@ -126,25 +115,25 @@ static inline void mx_config_RF(void) {
     RF_cmdPropTx.startTrigger.triggerType = TRIG_NOW;
 //---------------------------------------------------------------------
    if (RFQueue_defineQueue(&dataQueue,
-                               rxDataEntryBuffer,
-                               sizeof(rxDataEntryBuffer),
-                               NUM_DATA_ENTRIES,
-                               MAX_LENGTH + NUM_APPENDED_BYTES)) {
-           /* Failed to allocate space for all data entries */
-           mx_say_err("RFQueue_defineQueue");
-       }
+                           rxDataEntryBuffer,
+                           sizeof(rxDataEntryBuffer),
+                           NUM_DATA_ENTRIES,
+                           MAX_LENGTH + NUM_APPENDED_BYTES)) {
+       /* Failed to allocate space for all data entries */
+       mx_say_err("RFQueue_defineQueue");
+    }
 
-       /* Modify CMD_PROP_RX command for application needs */
-       /* Set the Data Entity queue for received data */
-       RF_cmdPropRx.pQueue = &dataQueue;
-       /* Discard ignored packets from Rx queue */
-       RF_cmdPropRx.rxConf.bAutoFlushIgnored = 1;
-       /* Discard packets with CRC error from Rx queue */
-       RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
-       /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
-       RF_cmdPropRx.maxPktLen = KEY_PKG_LEN;
-       RF_cmdPropRx.pktConf.bRepeatOk = 0;
-       RF_cmdPropRx.pktConf.bRepeatNok = 1;
+   /* Modify CMD_PROP_RX command for application needs */
+   /* Set the Data Entity queue for received data */
+   RF_cmdPropRx.pQueue = &dataQueue;
+   /* Discard ignored packets from Rx queue */
+   RF_cmdPropRx.rxConf.bAutoFlushIgnored = 1;
+   /* Discard packets with CRC error from Rx queue */
+   RF_cmdPropRx.rxConf.bAutoFlushCrcErr = 1;
+   /* Implement packet length filtering to avoid PROP_ERROR_RXBUF */
+   RF_cmdPropRx.maxPktLen = KEY_PKG_LEN;
+   RF_cmdPropRx.pktConf.bRepeatOk = 0;
+   RF_cmdPropRx.pktConf.bRepeatNok = 1;
 
 //---------------------------------------------------------------
     /* Request access to the radio */
