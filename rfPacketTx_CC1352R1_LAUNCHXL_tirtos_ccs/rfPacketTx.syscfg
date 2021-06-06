@@ -23,7 +23,6 @@ const GPIO     = scripting.addModule("/ti/drivers/GPIO");
 const GPIO1    = GPIO.addInstance();
 const GPIO2    = GPIO.addInstance();
 const GPIO3    = GPIO.addInstance();
-const GPIO4    = GPIO.addInstance();
 const RF       = scripting.addModule("/ti/drivers/RF");
 const RTOS     = scripting.addModule("/ti/drivers/RTOS");
 const SHA2     = scripting.addModule("/ti/drivers/SHA2", {}, false);
@@ -68,15 +67,10 @@ GPIO2.$name             = "CONFIG_GPIO_LED_RED";
 GPIO2.$hardware         = system.deviceData.board.components.LED_RED;
 GPIO2.pinInstance.$name = "CONFIG_PIN_2";
 
-GPIO3.$hardware         = system.deviceData.board.components["BTN-1"];
+GPIO3.$hardware         = system.deviceData.board.components["BTN-2"];
 GPIO3.mode              = "Dynamic";
-GPIO3.$name             = "CONFIG_GPIO_RECV_BTN";
-GPIO3.pinInstance.$name = "CONFIG_PIN_3";
-
-GPIO4.$hardware         = system.deviceData.board.components["BTN-2"];
-GPIO4.mode              = "Dynamic";
-GPIO4.$name             = "CONFIG_GPIO_SEND_BTN";
-GPIO4.pinInstance.$name = "CONFIG_PIN_4";
+GPIO3.$name             = "CONFIG_GPIO_SEND_BTN";
+GPIO3.pinInstance.$name = "CONFIG_PIN_4";
 
 SHA21.$name = "CONFIG_SHA2_0";
 
@@ -94,8 +88,7 @@ UART21.rxPinInstance.$name = "CONFIG_PIN_1";
  */
 GPIO1.gpioPin.$suggestSolution     = "boosterpack.40";
 GPIO2.gpioPin.$suggestSolution     = "boosterpack.39";
-GPIO3.gpioPin.$suggestSolution     = "boosterpack.13";
-GPIO4.gpioPin.$suggestSolution     = "boosterpack.12";
+GPIO3.gpioPin.$suggestSolution     = "boosterpack.12";
 UART21.uart.$suggestSolution       = "UART0";
 UART21.uart.txPin.$suggestSolution = "boosterpack.4";
 UART21.uart.rxPin.$suggestSolution = "boosterpack.3";

@@ -17,9 +17,12 @@
 #define KEY_PKG 1
 
 #define PKG_ID_BYTE 0
-#define PKG_LEN_BYTE 1
+#define PKG_ID_BYTE 0
+#define CUR_PKG_NUM_BYTE 1
+#define TOTAL_PKG_NUM_BYTE 2
 
 #define HEADER_LEN 1
+#define MSG_HEADER_LEN 3
 #define NONCE_LEN 12
 #define MSG_LEN 64
 #define MAC_LEN 4

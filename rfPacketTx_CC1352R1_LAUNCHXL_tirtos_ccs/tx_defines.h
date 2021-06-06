@@ -11,11 +11,13 @@
 #define PACKET_INTERVAL     500000  /* Set packet interval to 500000us or 500ms */
 #endif
 
-#define WELCOME_MSG "\n\r--- Hello World @ Tx ---\n\r"
+#define HELLO_MSG "\n\r=================== Hello World @ Tx ==================\n\r"
+#define KEY_WAITING_MSG "      Waiting for peer public key...\n\rNOTE: restart Rx to send its key\n\r"
+#define PRESS_BTN_MSG "NOTE: Press RIGHT button to share my public key...\n\r"
+#define WELCOME_MSG "      Key exchange done.\n\r======================= Welcome =======================\n\n\r"
 #define NEWLINE "\n\r"
 
 #define TX_ID "L41009CU"
-#define BUF_SZ 256
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
 // key n' crypto
@@ -27,9 +29,12 @@
 #define KEY_PKG 1
 
 #define PKG_ID_BYTE 0
-#define PKG_LEN_BYTE 1
+#define CUR_PKG_NUM_BYTE 1
+#define TOTAL_PKG_NUM_BYTE 2
+
 
 #define HEADER_LEN 1
+#define MSG_HEADER_LEN 3
 #define NONCE_LEN 12
 #define MSG_LEN 64
 #define MAC_LEN 4

@@ -58,20 +58,18 @@ void *mainThread(void *arg0) {
 
 //    ------------ -- KEYS STUFF -- ---------------
     mx_do_my_keys();
+
+    UART2_write(uart, KEY_WAITING_MSG, sizeof(KEY_WAITING_MSG), NULL);
     mx_recv_n_proceed_peer_key();
+
+    UART2_write(uart, PRESS_BTN_MSG, sizeof(PRESS_BTN_MSG), NULL);
+    Semaphore_pend(send_btn_pressed, BIOS_WAIT_FOREVER);
     mx_share_my_pub_key();
 
-    /* Wait for button0 pressed before proceeding */
-//    Semaphore_pend(send_btn_pressed, BIOS_WAIT_FOREVER);
-//    mx_share_my_pub_key();
+    UART2_write(uart, WELCOME_MSG, sizeof(WELCOME_MSG), NULL);
 
-//    Semaphore_pend(recv_btn_pressed, BIOS_WAIT_FOREVER);
-//    mx_recv_n_proceed_peer_key();
-
-
-//    -------------- ------------ -----------------
-
-//    get user input, split into msgs and send
+//    ------------ -- MSG STUFF -- ---------------
+//  get user input, split into msgs, encrypt and send
     mx_do_msg();
 
     return NULL;
@@ -94,7 +92,7 @@ static inline void mx_config_UART2(void) {
 
     uart = UART2_open(CONFIG_UART2_0, &uart_params);
     if (uart) {
-        UART2_write(uart, WELCOME_MSG, sizeof(WELCOME_MSG), NULL);
+        UART2_write(uart, HELLO_MSG, sizeof(HELLO_MSG), NULL);
     }
     else {
         while (1) {
@@ -158,36 +156,25 @@ static inline void mx_config_btns(void) {
     /* Initialize semaphores */
     Semaphore_Params sem_param;
     Semaphore_Params_init(&sem_param);
-    recv_btn_pressed = Semaphore_create(0, &sem_param, NULL);
     send_btn_pressed = Semaphore_create(0, &sem_param, NULL);
 
     /* Setup callback for button pins */
-    GPIO_setConfig(CONFIG_GPIO_RECV_BTN, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);
     GPIO_setConfig(CONFIG_GPIO_SEND_BTN, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);
 
-    GPIO_setCallback(CONFIG_GPIO_RECV_BTN, btn_callback);
     GPIO_setCallback(CONFIG_GPIO_SEND_BTN, btn_callback);
 
     /* Enable interrupts */
-    GPIO_enableInt(CONFIG_GPIO_RECV_BTN);
     GPIO_enableInt(CONFIG_GPIO_SEND_BTN);
-
-    UART2_write(uart, "btn config done\n\r", sizeof("btn config done\n\r"), NULL);
-
 }
 
 static inline void btn_callback(uint_least8_t index) {
     if (!GPIO_read(index)) {
         switch(index) {
-            case CONFIG_GPIO_RECV_BTN:
-                UART2_write(uart, "--- RECV_BTN pressed ---\n\r", sizeof("--- RECV_BTN pressed ---\n\r"), NULL);
-                Semaphore_post(recv_btn_pressed);
-                break;
             case CONFIG_GPIO_SEND_BTN:
-                UART2_write(uart, "--- SEND_BTN pressed ---\n\r", sizeof("--- SEND_BTN pressed ---\n\r"), NULL);
                 Semaphore_post(send_btn_pressed);
                 break;
             default:
+                UART2_write(uart, "--- to SEND key pkg press RIGHT btn ---\n\r", sizeof("--- to SEND key pkg press RIGHT btn  ---\n\r"), NULL);
                 break;
         }
     }

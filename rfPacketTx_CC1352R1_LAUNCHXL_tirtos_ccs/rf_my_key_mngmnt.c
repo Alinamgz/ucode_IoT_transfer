@@ -21,14 +21,11 @@ void mx_generate_random_bytes(CryptoKey *entropy_key) {
 
 /*    open a TRNG_Handle with the provided buffer */
     handle = TRNG_open(CONFIG_TRNG_0, NULL);
-
     if (!handle) {
         mx_say_err("TRNG_open()");
     }
 
     rslt = TRNG_generateEntropy(handle, entropy_key);
-
-/*    err handling */
     if (rslt != TRNG_STATUS_SUCCESS) {
         mx_say_err("TRNG_generateEntropy()");
     }
@@ -36,9 +33,7 @@ void mx_generate_random_bytes(CryptoKey *entropy_key) {
     TRNG_close(handle);
 }
 
-
 //===============================================================================================================
-
 
 void mx_generate_public_key(CryptoKey *private_key, CryptoKey *public_key) {
     int_fast16_t rslt;
@@ -80,19 +75,19 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
 
     uint8_t hashed_data_buf[PRIVATE_KEY_LEN];
 
-//load pkg metadata n' publick key to pkg
     memset(key_pkg, 0, sizeof(key_pkg));
+    memset(hashed_data_buf, 0, sizeof(hashed_data_buf));
+
+    /* load pkg metadata n' publick key to pkg */
     key_pkg[PKG_ID_BYTE] = KEY_PKG;
-//    key_pkg[PKG_LEN_BYTE] = KEY_PKG_LEN;
     memcpy(&key_pkg[HEADER_LEN], public_key->u.plaintext.keyMaterial, public_key->u.plaintext.keyLength);
 
-/* Perform SHA-2 computation on the data to be signed */
-   memset(hashed_data_buf, 0, sizeof(hashed_data_buf));
-   do_sha(key_pkg, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
+    /* Perform SHA-2 computation on the data to be signed */
+   mx_do_sha(key_pkg, HEADER_LEN + PUBLIC_KEY_LEN, hashed_data_buf, 1);
 
-   mx_check_write_pkg(hashed_data_buf, sizeof(hashed_data_buf), "PUB KEY GEN hash\n", sizeof("PUB KEY GEN hash\n"));
+   mx_print_pkg(hashed_data_buf, sizeof(hashed_data_buf), "PUB KEY GEN hash\n", sizeof("PUB KEY GEN hash\n"));
+
     /* Sign some key data to verify to the receiver that this unit has the corresponding private key to the transmit public key pair */
-
     ECDSA_OperationSign_init(&operation_sign);
     operation_sign.curve = &ECCParams_NISTP256;
     operation_sign.myPrivateKey = private_key;
@@ -111,151 +106,6 @@ void mx_create_publick_key_pkg(uint8_t *key_pkg, CryptoKey *private_key, CryptoK
     }
 
     ECDSA_close(handle_ecdsa);
-}
-
-//===============================================================================================================
-
-void mx_send_key(void) {
-
-//    memset(&packet[1], 'j', 130);
-    terminationReason = RF_runCmd(rfHandle, (RF_Op*)&RF_cmdPropTx, RF_PriorityNormal, NULL, 0);
-    int i = 0;
-    char status[4];
-
-    switch(terminationReason) {
-        case RF_EventLastCmdDone:
-    UART2_write(uart, "Sending key pkg done. SENT:\n\r", sizeof("Sending key pkg done SENT:\n\r"), NULL);
-    UART2_write(uart, packet, sizeof(packet), NULL);
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
-            for (i = 0; i < MAX_LENGTH; i++) {
-                memset(status, 0, sizeof(status));
-                sprintf(status, " %d", RF_cmdPropTx.pPkt[i]);
-                UART2_write(uart, status, sizeof(status), NULL);
-            }
-
-            GPIO_toggle(CONFIG_GPIO_LED_GREEN);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-
-            sleep(1);
-
-            GPIO_toggle(CONFIG_GPIO_LED_GREEN);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-            break;
-        case RF_EventCmdCancelled:
-    UART2_write(uart, "Sending key pkg ERR RF_EventCmdCancelled\n\r", sizeof("Sending key pkg ERR RF_EventCmdCancelled\n\r"), NULL);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-            // Command cancelled before it was started; it can be caused
-        // by RF_cancelCmd() or RF_flushCmd().
-            break;
-        case RF_EventCmdAborted:
-    UART2_write(uart, "Sending key pkg ERR RF_EventCmdAborted\n\r", sizeof("Sending key pkg ERR RF_EventCmdAborted\n\r"), NULL);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-            // Abrupt command termination caused by RF_cancelCmd() or
-            // RF_flushCmd().
-            break;
-        case RF_EventCmdStopped:
-    UART2_write(uart, "Sending key pkg ERR RF_EventCmdStopped\n\r", sizeof("Sending key pkg ERR RF_EventCmdStopped\n\r"), NULL);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-            // Graceful command termination caused by RF_cancelCmd() or
-            // RF_flushCmd().
-            break;
-        default:
-    UART2_write(uart, "Sending key pkg Uncaught ERR\n\r", sizeof("Sending key pkg Uncaught ERR\n\r"), NULL);
-            GPIO_toggle(CONFIG_GPIO_LED_RED);
-            // Uncaught error event
-            while(1);
-    }
-}
-
-
-//===============================================================================================================
-
-void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, CryptoKey *shared_secret, CryptoKey *symetric_key) {
-    int_fast16_t rslt;
-
-    ECDH_Handle handle_ecdh;
-    ECDH_Params ecdh_params;
-    ECDH_OperationComputeSharedSecret operationComputeSharedSecret;
-
-    uint8_t buf_sha_digest[SHA2_DIGEST_LENGTH_BYTES_256];
-
-    int i = 0;
-    char status[64];
-    memset(status, 0, 64);
-
-    /* Since we are using default ECDH_Params, we just pass in NULL for that parameter. */
-    ECDH_Params_init(&ecdh_params);
-    ecdh_params.returnBehavior = ECDH_RETURN_BEHAVIOR_BLOCKING;
-    handle_ecdh = ECDH_open(CONFIG_ECDH_0, &ecdh_params);
-    if (!handle_ecdh) {
-        mx_say_err("ECDH_open");
-    }
-
-
-    /* The ECC_NISTP256 struct is provided in ti/drivers/types/EccParams.h and the corresponding device-specific implementation. */
-    ECDH_OperationComputeSharedSecret_init(&operationComputeSharedSecret);
-    operationComputeSharedSecret.curve = &ECCParams_NISTP256;
-    operationComputeSharedSecret.myPrivateKey       = my_private_key;
-    operationComputeSharedSecret.theirPublicKey     = peer_pub_key;
-    operationComputeSharedSecret.sharedSecret       = shared_secret;
-
-    UART2_write(uart, "secret BEF:\n", sizeof("secret BEF:\n"), NULL);
-    for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-        memset(status, 0, sizeof(status));
-        sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-        UART2_write(uart, status, sizeof(status), NULL);
-    }
-    UART2_write(uart, "\n\r", 2, NULL);
-
-    rslt = ECDH_computeSharedSecret(handle_ecdh, &operationComputeSharedSecret);
-
-    switch (rslt) {
-        case ECDH_STATUS_ERROR:
-            mx_say_err("ECDH_STATUS_ERROR");
-            break;
-        case ECDH_STATUS_RESOURCE_UNAVAILABLE:
-            mx_say_err("ECDH_STATUS_RESOURCE_UNAVAILABLE");
-            break;
-
-        case ECDH_STATUS_CANCELED:
-            mx_say_err("ECDH_STATUS_CANCELED");
-            break;
-
-        case ECDH_STATUS_POINT_AT_INFINITY:
-            mx_say_err("ECDH_STATUS_POINT_AT_INFINITY");
-            break;
-
-        case ECDH_STATUS_PRIVATE_KEY_ZERO:
-            mx_say_err("ECDH_STATUS_PRIVATE_KEY_ZERO");
-            break;
-        case ECDH_STATUS_SUCCESS:
-                UART2_write(uart, "secret AFT:\n", sizeof("secret AFT:\n"), NULL);
-                for (i = 0; i < shared_secret->u.plaintext.keyLength; i++) {
-                    memset(status, 0, sizeof(status));
-                    sprintf(status, " %d", shared_secret->u.plaintext.keyMaterial[i]);
-                    UART2_write(uart, status, sizeof(status), NULL);
-                }
-                UART2_write(uart, "\n\r", 2, NULL);
-            break;
-        default:
-            memset(status, 0, sizeof(status));
-            sprintf(status, "!! status %d !!\n\r", rslt);
-            UART2_write(uart, status, sizeof(status), NULL);
-            mx_say_err("fckn ecdh");
-            break;
-    }
-
-
-    ECDH_close(handle_ecdh);
-
-    /* Hash the sharedSecret to a 256-bit buffer */
-    /* As the Y-coordinate is derived from the X-coordinate, hashing only the X component (i.e. keyLength/2 bytes)
-     * is a relatively common way of deriving a symmetric key from a shared secret if you are not using a dedicated key derivation function. */
-    do_sha(shared_secret->u.plaintext.keyMaterial, shared_secret->u.plaintext.keyLength, buf_sha_digest, 0);
-
-    /* AES keys are 128-bit long, so truncate the generated hash */
-    memcpy(symetric_key->u.plaintext.keyMaterial, buf_sha_digest, symetric_key->u.plaintext.keyLength);
-
 }
 
 //===============================================================================================================

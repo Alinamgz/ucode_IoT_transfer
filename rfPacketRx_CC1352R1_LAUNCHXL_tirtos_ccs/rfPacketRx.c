@@ -79,22 +79,19 @@ void *mainThread(void *arg0) {
                     mx_generate_aes_key(&private_key, &peer_pub_key, &shared_secret, &symmetric_key);
                     break;
                 case MSG_PKG:
-                    UART2_write(uart, MSG_PREFIX, sizeof(MSG_PREFIX), NULL);
-                    UART2_write(uart, packet, sizeof(packet), NULL);
-                    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+//                    UART2_write(uart, MSG_PREFIX, sizeof(MSG_PREFIX), NULL);
+//                    UART2_write(uart, packet, sizeof(packet), NULL);
+//                    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
 
                     mx_decrypt_n_print_msg_pkg(packet, &symmetric_key);
                     break;
                 default:
                     mx_say_err("unknown pkg type");
-//                    UART2_write(uart, "!!! ERR: unknown pkg type !!!\\n\r", sizeof("!!! ERR: unknown pkg type !!!\\n\r"), NULL);
                     break;
-
             }
         }
 
-
-        UART2_write(uart, "\n\r--------------------------\n\r", sizeof("\n\r--------------------------\n\r"), NULL);
+//        UART2_write(uart, "\n\r--------------------------\n\r", sizeof("\n\r--------------------------\n\r"), NULL);
     }
 
 }
@@ -291,42 +288,42 @@ static inline int_fast16_t mx_is_rx_ok(RF_EventMask terminationReason, uint32_t 
 //==============================================================================================
 
 void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
+    char chck[32] = "";
+//    int i = 0;
 
     if (e & RF_EventRxEntryDone) {
 
-            /* Toggle pin to indicate RX */
-            GPIO_toggle(CONFIG_GPIO_LED_GREEN);
-    //        GPIO_toggle(CONFIG_GPIO_LED_RED);
+        /* Toggle pin to indicate RX */
+        GPIO_toggle(CONFIG_GPIO_LED_GREEN);
+//        GPIO_toggle(CONFIG_GPIO_LED_RED);
 
-            /* Get current unhandled data entry */
-            currentDataEntry = RFQueue_getDataEntry();
+        /* Get current unhandled data entry */
+        currentDataEntry = RFQueue_getDataEntry();
 
-            /* Handle the packet data, located at &currentDataEntry->data:
-             * - Length is the first byte with the current configuration
-             * - Data starts from the second byte */
-            packetLength      = *(uint8_t*)(&currentDataEntry->data);
-            packetDataPointer = (uint8_t*)(&currentDataEntry->data + 1);
+        /* Handle the packet data, located at &currentDataEntry->data:
+         * - Length is the first byte with the current configuration
+         * - Data starts from the second byte */
+        packetLength      = *(uint8_t*)(&currentDataEntry->data);
+        packetDataPointer = (uint8_t*)(&currentDataEntry->data + 1);
 
-            /* Copy the payload + the status byte to the packet variable */
-            memset(packet,0, sizeof(packet));
-            memcpy(packet, packetDataPointer, (packetLength + 1));
-
-
-        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+        /* Copy the payload + the status byte to the packet variable */
+        memset(packet,0, sizeof(packet));
+        memcpy(packet, packetDataPointer, (packetLength + 1));
 
         RFQueue_nextEntry();
-
     }
 }
 
 //==============================================================================================
-
 static void mx_decrypt_n_print_msg_pkg(uint8_t *packet, CryptoKey *symmetric_key) {
     AESCCM_Handle handle_aesccm;
     AESCCM_Operation operation_aesccm;
 
     int_fast16_t rslt;
     uint8_t msg_buf[MSG_LEN];
+//    static uint8_t nonce[NONCE_LEN] = {0};
+
+    memset(msg_buf, 0, sizeof(msg_buf));
 
     handle_aesccm = AESCCM_open(CONFIG_AESECB_0, NULL);
     if (!handle_aesccm) {
@@ -338,27 +335,34 @@ static void mx_decrypt_n_print_msg_pkg(uint8_t *packet, CryptoKey *symmetric_key
     operation_aesccm.key = symmetric_key;
 
     operation_aesccm.aad = packet;
-    operation_aesccm.aadLength = HEADER_LEN;
+    operation_aesccm.aadLength = MSG_HEADER_LEN;
 
-    operation_aesccm.nonceInternallyGenerated = 1;
-    operation_aesccm.nonce = &packet[HEADER_LEN];
+    operation_aesccm.nonce = &packet[MSG_HEADER_LEN];
     operation_aesccm.nonceLength = NONCE_LEN;
 
-    operation_aesccm.input = &packet[HEADER_LEN + NONCE_LEN];
+    operation_aesccm.input = &packet[MSG_HEADER_LEN + NONCE_LEN];
     operation_aesccm.inputLength = MSG_LEN;
 
     operation_aesccm.output = msg_buf;
 
-    operation_aesccm.mac = &packet[HEADER_LEN + NONCE_LEN + MSG_LEN];
+    operation_aesccm.mac = &packet[MSG_HEADER_LEN + NONCE_LEN + MSG_LEN];
     operation_aesccm.macLength = MAC_LEN;
 
     rslt = AESCCM_oneStepDecrypt(handle_aesccm, &operation_aesccm);
     if (rslt != AESCCM_STATUS_SUCCESS) {
+        char chck[32] = "";
+        sprintf(chck, "\n\n\r --- decrypt err %d \n\r", rslt);
+        UART2_write(uart, chck, sizeof(chck), NULL);
         mx_say_err("AESCCM_oneStepDecrypt");
     }
 
     AESCCM_close(handle_aesccm);
 
+
     UART2_write(uart, msg_buf, sizeof(msg_buf), NULL);
-    UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
+
+    if (packet[CUR_PKG_NUM_BYTE] == packet[TOTAL_PKG_NUM_BYTE]) {
+        UART2_write(uart, "\n\r--------------------------\n\r", sizeof("\n\r--------------------------\n\r"), NULL);
+    }
+
 }

@@ -19,7 +19,6 @@ CryptoKey symmetric_key;
 // ======================================
 
 /* Semaphores to pend on button presses */
-static Semaphore_Handle recv_btn_pressed;
 static Semaphore_Handle send_btn_pressed;
 
 /***** Variable declarations *****/
