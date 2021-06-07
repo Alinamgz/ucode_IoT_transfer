@@ -2,7 +2,7 @@
 This challenge is made to get aqcuanted with wireless data transmission (RF) and basic encryption.
 
 Each board generates its key pair (Private and Public keys).<br>
-Tx waits for public key from Rx. After Rx's key received, User is asked to press button to send Tx's Public key to Rx. .<br>
+Tx waits for public key from Rx. After Rx's key received, User is asked to press button to send Tx's Public key to Rx.<br>
 As key exchange is completed, Tx can read users input via UART, encrypt it and send via RF.<br>
 RX receives encrypted msg, decrypts it and writes it via UART<br>
 F.e. to send `Lorem Ipsum` placeholder type: `lorem` + `ENTER`. Or you can type whatever you want. To edit your input use `LEFT ARROW` btn. <br>
