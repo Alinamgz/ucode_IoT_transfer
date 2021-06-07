@@ -29,7 +29,6 @@
 #include <ti/sysbios/knl/Semaphore.h>
 
 
-
 /* Driverlib Header files */
 #include DeviceFamily_constructPath(driverlib/rf_prop_mailbox.h)
 

@@ -12,10 +12,14 @@
 #endif
 
 #define HELLO_MSG "\n\r=================== Hello World @ Tx ==================\n\r"
-#define KEY_WAITING_MSG "      Waiting for peer public key...\n\rNOTE: restart Rx to send its key\n\r"
+#define KEY_WAITING_MSG "      Waiting for peer public key...\n\rNOTE: restart Rx and press its LEFT button to send key\n\r"
 #define PRESS_BTN_MSG "NOTE: Press RIGHT button to share my public key...\n\r"
-#define WELCOME_MSG "      Key exchange done.\n\r======================= Welcome =======================\n\n\r"
-#define NEWLINE "\n\r"
+#define WELCOME_MSG "      Key exchange done.\n\r======================= Welcome =======================\n\r"
+#define TIP_EDIT_MSG " TIP: To edit your msg use ARROW LEFT instead of Bacspace\n\r"
+#define TIP_LOREM_MSG " TIP: To send a placeholder msg type: lorem + ENTER\n\r"
+#define FIN_LINE "======================= ======== =======================\n\n\r"
+
+#define NEWLINE "\n\r--------------------------\n\r"
 
 #define TX_ID "L41009CU"
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."

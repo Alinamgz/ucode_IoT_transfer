@@ -1,6 +1,8 @@
 #pragma once
 
 //  ============== KEY ============
+uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
+
 uint8_t private_key_material[PRIVATE_KEY_LEN];
 uint8_t public_key_material[PUBLIC_KEY_LEN];
 
@@ -16,7 +18,8 @@ CryptoKey peer_pub_key;
 
 CryptoKey shared_secret;
 CryptoKey symmetric_key;
-// ======================================
+
+//============================================================================
 
 /* Semaphores to pend on button presses */
 static Semaphore_Handle send_btn_pressed;
@@ -28,6 +31,14 @@ RF_Object rfObject;
 RF_EventMask terminationReason;
 uint32_t cmdStatus;
 
+/* Receive dataQueue for RF Core to fill in data */
+static dataQueue_t dataQueue;
+static rfc_dataEntryGeneral_t* currentDataEntry;
+static uint8_t packetLength;
+static uint8_t* packetDataPointer;
+
+//============================================================================
+
 UART2_Handle uart;
 static UART2_Params uart_params;
 
@@ -37,13 +48,6 @@ static PIN_State ledPinState;
 
 static uint16_t seqNumber;
 static uint8_t parts;
-
-
-/***** Variable declarations *****/
-RF_Handle rfHandle;
-RF_Object rfObject;
-RF_EventMask terminationReason;
-uint32_t cmdStatus;
 
 //============================================================================
 
@@ -71,22 +75,4 @@ rxDataEntryBuffer[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
 #error This compiler is not supported.
 #endif
 
-/* Receive dataQueue for RF Core to fill in data */
-static dataQueue_t dataQueue;
-static rfc_dataEntryGeneral_t* currentDataEntry;
-static uint8_t packetLength;
-static uint8_t* packetDataPointer;
-
-
- uint8_t packet[MAX_LENGTH + NUM_APPENDED_BYTES - 1]; /* The length byte is stored in a separate variable */
-
-
-/*
- * Application LED pin configuration table:
- *   - All LEDs board LEDs are off.
- */
-//PIN_Config pinTable[] = {
-//    CONFIG_GPIO_LED_RED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-//    PIN_TERMINATE
-//};
 

@@ -18,8 +18,9 @@ static void mx_generate_aes_key(CryptoKey *my_private_key,
 								CryptoKey *peer_pub_key,
 								CryptoKey *shared_secret,
 								CryptoKey *symetric_key);
-
-void mx_recv_n_proceed_peer_key(void) {
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
+void mx_recv_n_process_peer_key(void) {
 	uint8_t is_rf_ok;
 
 	terminationReason = RF_runCmd(rfHandle,
@@ -67,7 +68,6 @@ void callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e) {
                 mx_say_err("unknown pkg type");
             }
 
-//        UART2_write(uart, NEWLINE, sizeof(NEWLINE), NULL);
         RFQueue_nextEntry();
     }
 }
@@ -168,10 +168,9 @@ void mx_generate_aes_key(CryptoKey *my_private_key, CryptoKey *peer_pub_key, Cry
         case ECDH_STATUS_SUCCESS:
             break;
         default:
-            mx_say_err("ECDH_computeSharedSecret");
+            mx_say_err("ECDH_computeSharedSecret uncaught");
             break;
     }
-
 
     ECDH_close(handle_ecdh);
 
